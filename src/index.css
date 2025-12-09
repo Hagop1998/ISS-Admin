@@ -1,0 +1,34 @@
+@import '~antd/dist/reset.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom Ant Design purple theme */
+:root {
+  --ant-primary-color: #3C0056;
+  --ant-primary-color-hover: #4d0069;
+  --ant-primary-color-active: #2d0040;
+}
+
+/* Logo border radius styling */
+img[alt*="logo" i],
+img[alt*="Logo" i],
+.logo {
+  border-radius: 12px !important;
+}
+
