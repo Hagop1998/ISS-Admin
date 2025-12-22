@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Table, message, Spin } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { addressService } from '../../services/addressService';
+import { useDispatch } from 'react-redux';
+import { getAddressById } from '../../store/slices/addressSlice';
 
 const AddressUsersModal = ({ open, onCancel, address }) => {
+  const dispatch = useDispatch();
   const [userSubscriptions, setUserSubscriptions] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +29,7 @@ const AddressUsersModal = ({ open, onCancel, address }) => {
       }
 
       // Call address/{id} endpoint to get full address details with userSubscriptions
-      const addressDetails = await addressService.getAddressById(addressId);
+      const addressDetails = await dispatch(getAddressById(addressId)).unwrap();
       
       // Extract userSubscriptions from device
       let subscriptions = [];

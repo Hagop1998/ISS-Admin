@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip } from 'antd';
 import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
-import { deviceService } from '../services/deviceService';
+import { restartDevice, createDevice, updateDevice } from '../store/slices/deviceSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
 import AddAccessControlModal from '../components/AccessControl/AddAccessControlModal';
 import DeviceUsersModal from '../components/Devices/DeviceUsersModal';
@@ -23,7 +23,6 @@ const AccessControlList = () => {
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
 
-  // Fetch devices on mount and when pagination changes
   useEffect(() => {
     dispatch(fetchDevices({
       page: pagination.currentPage,
@@ -31,7 +30,6 @@ const AccessControlList = () => {
     }));
   }, [dispatch, pagination.currentPage, pagination.itemsPerPage]);
 
-  // Redirect to login if token is cleared (after logout)
   useEffect(() => {
     if (!token) {
       navigate('/login', { replace: true });
@@ -119,7 +117,7 @@ const AccessControlList = () => {
         const localId = record.localId || record.serialNumber || '001';
         
         message.loading({ content: 'Restarting device...', key: 'restart' });
-        const result = await deviceService.restartDevice(localId);
+        const result = await dispatch(restartDevice(localId)).unwrap();
         message.success({ content: result.message || 'Device restarted successfully', key: 'restart' });
       } else {
         // For other actions, show info message (to be implemented later)
@@ -374,7 +372,7 @@ const AccessControlList = () => {
             };
 
             message.loading({ content: 'Creating device...', key: 'create' });
-            await deviceService.createDevice(deviceData);
+            await dispatch(createDevice(deviceData)).unwrap();
             message.success({ content: 'Access control device created successfully', key: 'create' });
             setIsAddModalOpen(false);
             
@@ -413,7 +411,7 @@ const AccessControlList = () => {
             };
 
             message.loading({ content: 'Updating device...', key: 'update' });
-            await deviceService.updateDevice(editingDevice.id, deviceData);
+            await dispatch(updateDevice({ id: editingDevice.id, deviceData })).unwrap();
             message.success({ content: 'Access control device updated successfully', key: 'update' });
             setIsEditModalOpen(false);
             setEditingDevice(null);

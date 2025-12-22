@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { UserOutlined } from '@ant-design/icons';
 import { toggleMenu } from '../../store/slices/navigationSlice';
 import { logout } from '../../store/slices/authSlice';
 
@@ -269,6 +270,23 @@ const Sidebar = ({ isOpen, onClose }) => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
+            </button>
+          </div>
+
+          {/* User Management */}
+          <div className="mt-4">
+            <button
+              className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                isActive('/users')
+                  ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                  : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+              }`}
+              onClick={() => handleNavigation('/users')}
+            >
+              <div className="flex items-center space-x-2">
+                <UserOutlined className="w-5 h-5" />
+                <span>User Managemendddt</span>
+              </div>
             </button>
           </div>
 

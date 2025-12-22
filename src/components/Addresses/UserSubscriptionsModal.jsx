@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Table, Spin, message, Typography } from 'antd';
-import { addressService } from '../../services/addressService';
+import { useDispatch } from 'react-redux';
+import { getAddressById } from '../../store/slices/addressSlice';
 
 const { Title } = Typography;
 
 const UserSubscriptionsModal = ({ open, onCancel, addresses }) => {
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [userSubscriptions, setUserSubscriptions] = useState([]);
 
@@ -28,7 +30,7 @@ const UserSubscriptionsModal = ({ open, onCancel, addresses }) => {
         if (!addressId) continue;
 
         try {
-          const addressDetails = await addressService.getAddressById(addressId);
+          const addressDetails = await dispatch(getAddressById(addressId)).unwrap();
           
           // Check if address has device and device has userSubscriptions
           if (addressDetails?.device?.userSubscriptions && Array.isArray(addressDetails.device.userSubscriptions)) {

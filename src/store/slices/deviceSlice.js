@@ -62,6 +62,171 @@ export const deleteDevice = createAsyncThunk(
   }
 );
 
+export const getDeviceById = createAsyncThunk(
+  'devices/getDeviceById',
+  async (deviceId, { rejectWithValue, dispatch }) => {
+    try {
+      const data = await deviceService.getDeviceById(deviceId);
+      return data;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to fetch device');
+    }
+  }
+);
+
+export const restartDevice = createAsyncThunk(
+  'devices/restartDevice',
+  async (localId, { rejectWithValue, dispatch }) => {
+    try {
+      const data = await deviceService.restartDevice(localId);
+      return data;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to restart device');
+    }
+  }
+);
+
+export const unlockDevice = createAsyncThunk(
+  'devices/unlockDevice',
+  async (localId, { rejectWithValue, dispatch }) => {
+    try {
+      const data = await deviceService.unlockDevice(localId);
+      return data;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to unlock device');
+    }
+  }
+);
+
+export const setManagerCard = createAsyncThunk(
+  'devices/setManagerCard',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.setManagerCard(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to set manager card');
+    }
+  }
+);
+
+export const setLiveCard = createAsyncThunk(
+  'devices/setLiveCard',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.setLiveCard(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to set live card');
+    }
+  }
+);
+
+export const setICCard = createAsyncThunk(
+  'devices/setICCard',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.setICCard(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to set IC card');
+    }
+  }
+);
+
+export const setIDCard = createAsyncThunk(
+  'devices/setIDCard',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.setIDCard(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to set ID card');
+    }
+  }
+);
+
+export const upgradeSoftware = createAsyncThunk(
+  'devices/upgradeSoftware',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.upgradeSoftware(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to upgrade software');
+    }
+  }
+);
+
+export const upgradeConfig = createAsyncThunk(
+  'devices/upgradeConfig',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.upgradeConfig(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to upgrade config');
+    }
+  }
+);
+
+export const setServerInfo = createAsyncThunk(
+  'devices/setServerInfo',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.setServerInfo(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to set server info');
+    }
+  }
+);
+
+export const reloadSip = createAsyncThunk(
+  'devices/reloadSip',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.reloadSip(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to reload SIP');
+    }
+  }
+);
+
 const initialState = {
   items: [],
   loading: false,
@@ -171,6 +336,117 @@ const deviceSlice = createSlice({
       .addCase(deleteDevice.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to delete device';
+      })
+      // Device actions (restart, unlock, etc.) - these don't modify state.items
+      .addCase(restartDevice.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(restartDevice.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(restartDevice.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to restart device';
+      })
+      .addCase(unlockDevice.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(unlockDevice.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(unlockDevice.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to unlock device';
+      })
+      .addCase(setManagerCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setManagerCard.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setManagerCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to set manager card';
+      })
+      .addCase(setLiveCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setLiveCard.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setLiveCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to set live card';
+      })
+      .addCase(setICCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setICCard.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setICCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to set IC card';
+      })
+      .addCase(setIDCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setIDCard.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setIDCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to set ID card';
+      })
+      .addCase(upgradeSoftware.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(upgradeSoftware.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(upgradeSoftware.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to upgrade software';
+      })
+      .addCase(upgradeConfig.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(upgradeConfig.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(upgradeConfig.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to upgrade config';
+      })
+      .addCase(setServerInfo.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setServerInfo.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setServerInfo.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to set server info';
+      })
+      .addCase(reloadSip.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(reloadSip.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(reloadSip.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to reload SIP';
       });
   },
 });

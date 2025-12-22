@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Breadcrumb, Card, Form, Input, Button, Space, message, Select, Row, Col, InputNumber, Alert } from 'antd';
 import { HomeOutlined, ReloadOutlined, CloudUploadOutlined, SettingOutlined, CloudServerOutlined, ApiOutlined, WarningOutlined } from '@ant-design/icons';
-import { fetchDevices } from '../store/slices/deviceSlice';
-import { deviceService } from '../services/deviceService';
+import { fetchDevices, restartDevice, upgradeSoftware, upgradeConfig, setServerInfo, reloadSip } from '../store/slices/deviceSlice';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -22,11 +21,7 @@ const DeviceConfig = () => {
   const [serverInfoForm] = Form.useForm();
   const [reloadSipForm] = Form.useForm();
 
-  const [loadingRestart, setLoadingRestart] = useState(false);
-  const [loadingUpgradeSoftware, setLoadingUpgradeSoftware] = useState(false);
-  const [loadingUpgradeConfig, setLoadingUpgradeConfig] = useState(false);
-  const [loadingServerInfo, setLoadingServerInfo] = useState(false);
-  const [loadingReloadSip, setLoadingReloadSip] = useState(false);
+  const { loading: deviceActionLoading } = useSelector((state) => state.devices);
 
   useEffect(() => {
     dispatch(fetchDevices({ page: 1, limit: 100 }));
@@ -39,20 +34,16 @@ const DeviceConfig = () => {
   }, [token, navigate]);
 
   const handleRestart = async (values) => {
-    setLoadingRestart(true);
     try {
-      await deviceService.restartDevice(values.localId);
+      await dispatch(restartDevice(values.localId)).unwrap();
       message.success('Device restart initiated successfully');
       restartForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to restart device');
-    } finally {
-      setLoadingRestart(false);
+      message.error(error || 'Failed to restart device');
     }
   };
 
   const handleUpgradeSoftware = async (values) => {
-    setLoadingUpgradeSoftware(true);
     try {
       const payload = {
         localId: values.localId,
@@ -62,18 +53,15 @@ const DeviceConfig = () => {
         content: String(values.content || ''),
         verifCode: String(values.verifCode || ''),
       };
-      await deviceService.upgradeSoftware(payload);
+      await dispatch(upgradeSoftware(payload)).unwrap();
       message.success('Software upgrade initiated successfully');
       upgradeSoftwareForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to upgrade software');
-    } finally {
-      setLoadingUpgradeSoftware(false);
+      message.error(error || 'Failed to upgrade software');
     }
   };
 
   const handleUpgradeConfig = async (values) => {
-    setLoadingUpgradeConfig(true);
     try {
       const payload = {
         localId: values.localId,
@@ -83,44 +71,36 @@ const DeviceConfig = () => {
         content: String(values.content || ''),
         verifCode: String(values.verifCode || ''),
       };
-      await deviceService.upgradeConfig(payload);
+      await dispatch(upgradeConfig(payload)).unwrap();
       message.success('Config upgrade initiated successfully');
       upgradeConfigForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to upgrade config');
-    } finally {
-      setLoadingUpgradeConfig(false);
+      message.error(error || 'Failed to upgrade config');
     }
   };
 
   const handleSetServerInfo = async (values) => {
-    setLoadingServerInfo(true);
     try {
       const payload = {
         localId: values.localId,
         ip: String(values.ip),
         port: Number(values.port),
       };
-      await deviceService.setServerInfo(payload);
+      await dispatch(setServerInfo(payload)).unwrap();
       message.success('Server info set successfully');
       serverInfoForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to set server info');
-    } finally {
-      setLoadingServerInfo(false);
+      message.error(error || 'Failed to set server info');
     }
   };
 
   const handleReloadSip = async (values) => {
-    setLoadingReloadSip(true);
     try {
-      await deviceService.reloadSip({ localId: values.localId });
+      await dispatch(reloadSip({ localId: values.localId })).unwrap();
       message.success('SIP reloaded successfully');
       reloadSipForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to reload SIP');
-    } finally {
-      setLoadingReloadSip(false);
+      message.error(error || 'Failed to reload SIP');
     }
   };
 
@@ -194,7 +174,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingRestart}
+                  loading={deviceActionLoading}
                   icon={<ReloadOutlined />}
                   block
                   danger
@@ -249,7 +229,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingReloadSip}
+                  loading={deviceActionLoading}
                   icon={<ApiOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -333,7 +313,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingServerInfo}
+                  loading={deviceActionLoading}
                   icon={<CloudServerOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -437,7 +417,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingUpgradeSoftware}
+                  loading={deviceActionLoading}
                   icon={<CloudUploadOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -541,7 +521,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingUpgradeConfig}
+                  loading={deviceActionLoading}
                   icon={<SettingOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}

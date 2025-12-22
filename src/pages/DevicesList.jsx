@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tooltip, Table } from 'antd';
 import { HomeOutlined, DeleteOutlined, PlusOutlined, EditOutlined, UserOutlined, UnlockOutlined } from '@ant-design/icons';
-import { fetchDevices, createDevice, updateDevice, deleteDevice } from '../store/slices/deviceSlice';
-import { deviceService } from '../services/deviceService';
+import { fetchDevices, createDevice, updateDevice, deleteDevice, unlockDevice } from '../store/slices/deviceSlice';
 import DeviceUsersModal from '../components/Devices/DeviceUsersModal';
 import AddDeviceModal from '../components/Devices/AddDeviceModal';
 
@@ -120,10 +119,10 @@ const DevicesList = () => {
     }
 
     try {
-      await deviceService.unlockDevice(localId);
+      await dispatch(unlockDevice(localId)).unwrap();
       message.success('Door unlocked successfully');
     } catch (error) {
-      message.error(error.message || 'Failed to unlock door');
+      message.error(error || 'Failed to unlock door');
     }
   };
 

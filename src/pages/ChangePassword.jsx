@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Breadcrumb, Form, Input, Button, Space, message } from 'antd';
 import { HomeOutlined, SwapOutlined } from '@ant-design/icons';
-import { userService } from '../services/userService';
+import { changePassword } from '../store/slices/userSlice';
 import Captcha from '../components/Common/Captcha';
 
 const { Title } = Typography;
@@ -18,10 +18,11 @@ const generateCaptcha = () => {
 };
 
 const ChangePassword = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, token } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.users);
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const [captchaValue, setCaptchaValue] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
 
@@ -53,7 +54,6 @@ const ChangePassword = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const payload = {
         oldPassword: values.originalPassword,
@@ -61,16 +61,14 @@ const ChangePassword = () => {
         newPasswordConfirm: values.confirmNewPassword,
       };
 
-      await userService.changePassword(payload);
+      await dispatch(changePassword(payload)).unwrap();
       message.success('Password changed successfully');
       form.resetFields();
       setCaptchaInput('');
       handleRefreshCaptcha();
     } catch (error) {
-      message.error(error.message || 'Failed to change password');
+      message.error(error || 'Failed to change password');
       handleRefreshCaptcha();
-    } finally {
-      setLoading(false);
     }
   };
 

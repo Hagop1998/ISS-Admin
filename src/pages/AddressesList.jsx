@@ -54,12 +54,9 @@ const AddressesList = () => {
 
   const handleAdd = async (values) => {
     try {
-      // Get managerId from logged-in user, or set to null if not available
-      const managerId = user?.id || user?._id || null;
-      
       const addressData = {
         ...values,
-        managerId: managerId ? Number(managerId) : null,
+        managerId: values.managerId ? Number(values.managerId) : null,
       };
       
       await dispatch(createAddress(addressData)).unwrap();
@@ -102,7 +99,7 @@ const AddressesList = () => {
   const handleAssignToManager = async (address) => {
     try {
       const addressId = address._id || address.id;
-      const managerId = user?.id || user?._id || 1; // Get managerId from auth user or default to 1
+      const managerId = address.managerId || null;
       
       await dispatch(updateAddress({ 
         id: addressId, 

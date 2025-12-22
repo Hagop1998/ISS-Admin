@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Button, Space, message, Select } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAddresses } from '../../store/slices/addressSlice';
-import { deviceService } from '../../services/deviceService';
+import { getDeviceById } from '../../store/slices/deviceSlice';
 
 const { Option } = Select;
 
@@ -30,7 +30,8 @@ const AddDeviceModal = ({ open, onCancel, onSubmit, mode = 'add', initialValues 
       const deviceId = initialValues.id || initialValues._id;
       
       if (deviceId) {
-        deviceService.getDeviceById(deviceId)
+        dispatch(getDeviceById(deviceId))
+          .unwrap()
           .then((device) => {
             form.setFieldsValue({
               addressId: device.addressId || device.address?.id,
@@ -44,7 +45,7 @@ const AddDeviceModal = ({ open, onCancel, onSubmit, mode = 'add', initialValues 
           })
           .catch((error) => {
             console.error('Error loading device:', error);
-            message.error('Failed to load device data');
+            message.error(error || 'Failed to load device data');
             setLoadingDevice(false);
             onCancel();
           });

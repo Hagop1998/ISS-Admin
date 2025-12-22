@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Breadcrumb, Card, Form, Input, Button, Space, message, Select, Row, Col, InputNumber } from 'antd';
 import { HomeOutlined, CreditCardOutlined, UserOutlined, IdcardOutlined, SafetyOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { fetchDevices } from '../store/slices/deviceSlice';
-import { deviceService } from '../services/deviceService';
+import { fetchDevices, setManagerCard, setLiveCard, setICCard, setIDCard } from '../store/slices/deviceSlice';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -20,10 +19,7 @@ const CardSettings = () => {
   const [icCardForm] = Form.useForm();
   const [idCardForm] = Form.useForm();
 
-  const [loadingManager, setLoadingManager] = useState(false);
-  const [loadingLive, setLoadingLive] = useState(false);
-  const [loadingIC, setLoadingIC] = useState(false);
-  const [loadingID, setLoadingID] = useState(false);
+  const { loading: deviceActionLoading } = useSelector((state) => state.devices);
 
   useEffect(() => {
     dispatch(fetchDevices({ page: 1, limit: 100 }));
@@ -36,74 +32,62 @@ const CardSettings = () => {
   }, [token, navigate]);
 
   const handleSetManagerCard = async (values) => {
-    setLoadingManager(true);
     try {
       const payload = {
         localId: values.localId,
         sectionId: Number(values.sectionId),
         sectionPwd: String(values.sectionPwd),
       };
-      await deviceService.setManagerCard(payload);
+      await dispatch(setManagerCard(payload)).unwrap();
       message.success('Manager card set successfully');
       managerCardForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to set manager card');
-    } finally {
-      setLoadingManager(false);
+      message.error(error || 'Failed to set manager card');
     }
   };
 
   const handleSetLiveCard = async (values) => {
-    setLoadingLive(true);
     try {
       const payload = {
         localId: values.localId,
         cardOpt: Number(values.cardOpt),
         cardSN: String(values.cardSN),
       };
-      await deviceService.setLiveCard(payload);
+      await dispatch(setLiveCard(payload)).unwrap();
       message.success('Live card set successfully');
       liveCardForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to set live card');
-    } finally {
-      setLoadingLive(false);
+      message.error(error || 'Failed to set live card');
     }
   };
 
   const handleSetICCard = async (values) => {
-    setLoadingIC(true);
     try {
       const payload = {
         localId: values.localId,
         cardOpt: Number(values.cardOpt),
         cardSN: String(values.cardSN),
       };
-      await deviceService.setICCard(payload);
+      await dispatch(setICCard(payload)).unwrap();
       message.success('IC card set successfully');
       icCardForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to set IC card');
-    } finally {
-      setLoadingIC(false);
+      message.error(error || 'Failed to set IC card');
     }
   };
 
   const handleSetIDCard = async (values) => {
-    setLoadingID(true);
     try {
       const payload = {
         localId: values.localId,
         cardOpt: Number(values.cardOpt),
         cardSN: String(values.cardSN),
       };
-      await deviceService.setIDCard(payload);
+      await dispatch(setIDCard(payload)).unwrap();
       message.success('ID card set successfully');
       idCardForm.resetFields();
     } catch (error) {
-      message.error(error.message || 'Failed to set ID card');
-    } finally {
-      setLoadingID(false);
+      message.error(error || 'Failed to set ID card');
     }
   };
 
@@ -200,7 +184,7 @@ const CardSettings = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingManager}
+                  loading={deviceActionLoading}
                   icon={<CheckCircleOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -277,7 +261,7 @@ const CardSettings = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingLive}
+                  loading={deviceActionLoading}
                   icon={<CheckCircleOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -354,7 +338,7 @@ const CardSettings = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingIC}
+                  loading={deviceActionLoading}
                   icon={<CheckCircleOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -431,7 +415,7 @@ const CardSettings = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loadingID}
+                  loading={deviceActionLoading}
                   icon={<CheckCircleOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}

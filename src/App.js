@@ -5,6 +5,7 @@ import { ConfigProvider, App as AntdApp } from 'antd';
 import Layout from './components/Layout/Layout';
 import AccessControlList from './pages/AccessControlList';
 import UsersFaceList from './pages/UsersFaceList';
+import UsersList from './pages/UsersList';
 import AddressesList from './pages/AddressesList';
 import CommunityOverview from './pages/CommunityOverview';
 import Login from './pages/Login';
@@ -70,6 +71,7 @@ function App() {
               <Route path="/device-manager/devices" element={<DevicesList />} />
               <Route path="/device-manager/card-settings" element={<CardSettings />} />
               <Route path="/device-manager/device-config" element={<DeviceConfig />} />
+              <Route path="/users" element={<UsersList />} />
               <Route path="/user-settings/personal-data" element={<PersonalData />} />
               <Route path="/user-settings/change-password" element={<ChangePassword />} />
             </Route>

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Table, message, Spin } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { deviceService } from '../../services/deviceService';
+import { useDispatch } from 'react-redux';
+import { getDeviceById } from '../../store/slices/deviceSlice';
 
 const DeviceUsersModal = ({ open, onCancel, device }) => {
+  const dispatch = useDispatch();
   const [userSubscriptions, setUserSubscriptions] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +29,7 @@ const DeviceUsersModal = ({ open, onCancel, device }) => {
       }
 
       // Call device/{id} endpoint to get full device details with userSubscriptions
-      const deviceDetails = await deviceService.getDeviceById(deviceId);
+      const deviceDetails = await dispatch(getDeviceById(deviceId)).unwrap();
       
       // Extract userSubscriptions from device
       let subscriptions = [];

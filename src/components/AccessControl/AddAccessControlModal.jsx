@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Modal, Form, Input, Select, Checkbox, Button, Space, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAddresses } from '../../store/slices/accessControlSlice';
-import { deviceService } from '../../services/deviceService';
+import { getDeviceById } from '../../store/slices/deviceSlice';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -29,7 +29,8 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
       if (mode === 'edit' && deviceId) {
         // Fetch device data for editing
         setLoading(true);
-        deviceService.getDeviceById(deviceId)
+        dispatch(getDeviceById(deviceId))
+          .unwrap()
           .then((device) => {
             // Map API response to form fields
             form.setFieldsValue({

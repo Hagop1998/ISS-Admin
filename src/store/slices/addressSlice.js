@@ -62,6 +62,21 @@ export const deleteAddress = createAsyncThunk(
   }
 );
 
+export const getAddressById = createAsyncThunk(
+  'addresses/getAddressById',
+  async (addressId, { rejectWithValue, dispatch }) => {
+    try {
+      const data = await addressService.getAddressById(addressId);
+      return data;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to fetch address');
+    }
+  }
+);
+
 const initialState = {
   items: [],
   loading: false,
