@@ -26,7 +26,9 @@ export const userService = {
 
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users?${queryParams}`
-      : `${API_BASE_URL}/users?${queryParams}`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users?${queryParams}`
+        : `${API_BASE_PATH}/users?${queryParams}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -62,7 +64,9 @@ export const userService = {
 
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users?${queryParams}`
-      : `${API_BASE_URL}/users?${queryParams}`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users?${queryParams}`
+        : `${API_BASE_PATH}/users?${queryParams}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -90,7 +94,9 @@ export const userService = {
   async deleteUser(userId) {
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users/${userId}`
-      : `${API_BASE_URL}/users/${userId}`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users/${userId}`
+        : `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
       method: 'DELETE',
@@ -127,7 +133,9 @@ export const userService = {
   async changePassword(payload) {
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users/change-password`
-      : `${API_BASE_URL}/users/change-password`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users/change-password`
+        : `${API_BASE_PATH}/users/change-password`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -156,7 +164,9 @@ export const userService = {
   async updateUser(userId, userData) {
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users/${userId}`
-      : `${API_BASE_URL}/users/${userId}`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users/${userId}`
+        : `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
       method: 'PUT',
@@ -185,7 +195,9 @@ export const userService = {
   async verifyUser(userId) {
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users/${userId}`
-      : `${API_BASE_URL}/users/${userId}`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users/${userId}`
+        : `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
       method: 'PATCH',
@@ -214,7 +226,9 @@ export const userService = {
   async createUser(userData) {
     const url = process.env.NODE_ENV === 'development'
       ? `${API_BASE_PATH}/users`
-      : `${API_BASE_URL}/users`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/users`
+        : `${API_BASE_PATH}/users`;
 
     const response = await fetch(url, {
       method: 'POST',

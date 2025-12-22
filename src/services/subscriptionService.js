@@ -17,7 +17,9 @@ export const subscriptionService = {
     async createUserSubscription(subscriptionData) {
         const url = process.env.NODE_ENV === 'development'
             ? `${API_BASE_PATH}/subscriptions/user-subscriptions`
-            : `${API_BASE_URL}/subscriptions/user-subscriptions`;
+            : API_BASE_URL 
+                ? `${API_BASE_URL}/subscriptions/user-subscriptions`
+                : `${API_BASE_PATH}/subscriptions/user-subscriptions`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -46,7 +48,9 @@ export const subscriptionService = {
     async updateUserSubscription(id, subscriptionData) {
         const url = process.env.NODE_ENV === 'development'
             ? `${API_BASE_PATH}/subscriptions/user-subscriptions/${id}`
-            : `${API_BASE_URL}/subscriptions/user-subscriptions/${id}`;
+            : API_BASE_URL 
+                ? `${API_BASE_URL}/subscriptions/user-subscriptions/${id}`
+                : `${API_BASE_PATH}/subscriptions/user-subscriptions/${id}`;
 
         const response = await fetch(url, {
             method: 'PATCH',

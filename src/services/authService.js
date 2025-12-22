@@ -3,11 +3,13 @@ const API_BASE_PATH = process.env.REACT_APP_API_BASE_PATH || '/api';
 
 export const authService = {
   async login(credentials) {
-    // Use proxy in development to avoid CORS issues
-    // The proxy rewrites /api/auth/login -> dev base URL/auth/login
+    // Use proxy in development and production to avoid CORS and mixed content issues
+    // In production (Vercel), use /api path which will be proxied to the backend
     const url = process.env.NODE_ENV === 'development' 
       ? `${API_BASE_PATH}/auth/login`  // Use proxy to avoid CORS
-      : `${API_BASE_URL}/auth/login`;
+      : API_BASE_URL 
+        ? `${API_BASE_URL}/auth/login`  // If API_BASE_URL is set, use it
+        : `${API_BASE_PATH}/auth/login`; // Otherwise use /api path (proxied by Vercel)
 
     const response = await fetch(url, {
       method: 'POST',
