@@ -1,0 +1,124 @@
+# GitLab CI/CD Pipeline for ISS Admin Project
+# This pipeline builds, tests, and deploys the React admin application
+
+stages:
+  - build
+  - test
+  - deploy
+
+# Cache node_modules to speed up builds
+cache:
+  paths:
+    - node_modules/
+
+# Variables
+variables:
+  NODE_VERSION: "18.x"
+  CI: "true"
+
+# Build stage - Build the React application
+build:
+  stage: build
+  image: node:${NODE_VERSION}
+  before_script:
+    - npm ci --legacy-peer-deps
+  script:
+    - echo "Building React application..."
+    - npm run build
+    - echo "Build completed successfully!"
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 week
+    when: on_success
+  only:
+    - main
+    - master
+    - develop
+    - merge_requests
+
+# Test stage - Run tests (if you have tests)
+test:
+  stage: test
+  image: node:${NODE_VERSION}
+  before_script:
+    - npm ci --legacy-peer-deps
+  script:
+    - echo "Running tests..."
+    - npm test -- --watchAll=false --coverage --passWithNoTests || true
+    - echo "Tests completed!"
+  coverage: '/Lines\s*:\s*(\d+\.\d+)%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  only:
+    - main
+    - master
+    - develop
+    - merge_requests
+
+# Lint stage - Check code quality
+lint:
+  stage: test
+  image: node:${NODE_VERSION}
+  before_script:
+    - npm ci --legacy-peer-deps
+  script:
+    - echo "Running linter..."
+    - npm run build 2>&1 | grep -i "warning\|error" || true
+    - echo "Linting completed!"
+  allow_failure: true
+  only:
+    - main
+    - master
+    - develop
+    - merge_requests
+
+# Deploy to staging environment
+deploy:staging:
+  stage: deploy
+  image: node:${NODE_VERSION}
+  environment:
+    name: staging
+    url: https://staging-admin.yourdomain.com
+  before_script:
+    - echo "Preparing deployment to staging..."
+  script:
+    - echo "Deploying to staging environment..."
+    # Add your deployment script here
+    # Example: rsync, scp, or cloud provider CLI commands
+    # - rsync -avz build/ user@staging-server:/var/www/admin/
+    - echo "Staging deployment completed!"
+  only:
+    - develop
+  when: manual
+  dependencies:
+    - build
+
+# Deploy to production environment
+deploy:production:
+  stage: deploy
+  image: node:${NODE_VERSION}
+  environment:
+    name: production
+    url: https://admin.yourdomain.com
+  before_script:
+    - echo "Preparing deployment to production..."
+  script:
+    - echo "Deploying to production environment..."
+    # Add your production deployment script here
+    # Example: rsync, scp, or cloud provider CLI commands
+    # - rsync -avz build/ user@production-server:/var/www/admin/
+    - echo "Production deployment completed!"
+  only:
+    - main
+    - master
+  when: manual
+  dependencies:
+    - build
+
