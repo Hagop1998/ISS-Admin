@@ -22,11 +22,8 @@ export const deviceService = {
       limit: limit.toString(),
     });
 
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/device?${queryParams}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/device?${queryParams}`
-        : `${API_BASE_PATH}/device?${queryParams}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/device?${queryParams}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -52,11 +49,8 @@ export const deviceService = {
   },
 
   async getDeviceById(deviceId) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/device/${deviceId}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/device/${deviceId}`
-        : `${API_BASE_PATH}/device/${deviceId}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/device/${deviceId}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -82,11 +76,8 @@ export const deviceService = {
   },
 
   async restartDevice(localId) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/restart`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/restart`
-        : `${API_BASE_PATH}/admin/middleware/restart`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/restart`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -123,11 +114,8 @@ export const deviceService = {
   },
 
   async unlockDevice(localId) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/middleware/unlock`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/middleware/unlock`
-        : `${API_BASE_PATH}/middleware/unlock`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/middleware/unlock`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -164,11 +152,8 @@ export const deviceService = {
   },
 
   async createDevice(deviceData) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/device`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/device`
-        : `${API_BASE_PATH}/device`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/device`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -205,11 +190,8 @@ export const deviceService = {
   },
 
   async updateDevice(deviceId, deviceData) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/device/${deviceId}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/device/${deviceId}`
-        : `${API_BASE_PATH}/device/${deviceId}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/device/${deviceId}`;
 
     const response = await fetch(url, {
       method: 'PATCH',
@@ -246,11 +228,8 @@ export const deviceService = {
   },
 
   async deleteDevice(deviceId) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/device/${deviceId}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/device/${deviceId}`
-        : `${API_BASE_PATH}/device/${deviceId}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/device/${deviceId}`;
 
     const response = await fetch(url, {
       method: 'DELETE',
@@ -277,11 +256,8 @@ export const deviceService = {
   },
 
   async setManagerCard(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/set_manager_card`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/set_manager_card`
-        : `${API_BASE_PATH}/admin/middleware/set_manager_card`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/set_manager_card`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -316,11 +292,8 @@ export const deviceService = {
   },
 
   async setLiveCard(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/set_live_card`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/set_live_card`
-        : `${API_BASE_PATH}/admin/middleware/set_live_card`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/set_live_card`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -355,11 +328,8 @@ export const deviceService = {
   },
 
   async setICCard(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/set_IC_card`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/set_IC_card`
-        : `${API_BASE_PATH}/admin/middleware/set_IC_card`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/set_IC_card`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -394,11 +364,8 @@ export const deviceService = {
   },
 
   async setIDCard(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/set_ID_card`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/set_ID_card`
-        : `${API_BASE_PATH}/admin/middleware/set_ID_card`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/set_ID_card`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -433,11 +400,8 @@ export const deviceService = {
   },
 
   async upgradeSoftware(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/upgrade_software`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/upgrade_software`
-        : `${API_BASE_PATH}/admin/middleware/upgrade_software`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/upgrade_software`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -472,11 +436,8 @@ export const deviceService = {
   },
 
   async upgradeConfig(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/upgrade_config`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/upgrade_config`
-        : `${API_BASE_PATH}/admin/middleware/upgrade_config`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/upgrade_config`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -511,11 +472,8 @@ export const deviceService = {
   },
 
   async setServerInfo(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/set_server_info`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/set_server_info`
-        : `${API_BASE_PATH}/admin/middleware/set_server_info`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/set_server_info`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -550,11 +508,8 @@ export const deviceService = {
   },
 
   async reloadSip(data) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/admin/middleware/reload_sip`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/admin/middleware/reload_sip`
-        : `${API_BASE_PATH}/admin/middleware/reload_sip`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/admin/middleware/reload_sip`;
 
     const response = await fetch(url, {
       method: 'POST',

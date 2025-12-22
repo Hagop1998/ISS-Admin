@@ -15,11 +15,8 @@ const getHeaders = () => {
 
 export const addressService = {
   async getAddresses() {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/address`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/address`
-        : `${API_BASE_PATH}/address`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/address`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -45,11 +42,8 @@ export const addressService = {
   },
 
   async createAddress(addressData) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/address`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/address`
-        : `${API_BASE_PATH}/address`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/address`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -85,11 +79,8 @@ export const addressService = {
   },
 
   async updateAddress(id, addressData) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/address/${id}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/address/${id}`
-        : `${API_BASE_PATH}/address/${id}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/address/${id}`;
 
     // Log the request for debugging
     console.log('PATCH request:', { url, addressData });
@@ -152,11 +143,8 @@ export const addressService = {
   },
 
   async getAddressById(id) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/address/${id}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/address/${id}`
-        : `${API_BASE_PATH}/address/${id}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/address/${id}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -182,11 +170,8 @@ export const addressService = {
   },
 
   async deleteAddress(id) {
-    const url = process.env.NODE_ENV === 'development'
-      ? `${API_BASE_PATH}/address/${id}`
-      : API_BASE_URL 
-        ? `${API_BASE_URL}/address/${id}`
-        : `${API_BASE_PATH}/address/${id}`;
+    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    const url = `${API_BASE_PATH}/address/${id}`;
 
     const response = await fetch(url, {
       method: 'DELETE',
