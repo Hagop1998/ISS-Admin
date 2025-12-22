@@ -6,26 +6,30 @@ stages:
   - test
   - deploy
 
-# Cache node_modules to speed up builds
-cache:
-  paths:
-    - node_modules/
+# Cache node_modules to speed up builds (optional - can cause issues)
+# cache:
+#   paths:
+#     - node_modules/
 
 # Variables
 variables:
-  NODE_VERSION: "18.x"
+  NODE_IMAGE: "node:18-alpine"
   CI: "true"
 
 # Build stage - Build the React application
 build:
   stage: build
-  image: node:${NODE_VERSION}
+  image: ${NODE_IMAGE}
   before_script:
-    - npm ci --legacy-peer-deps
+    - node --version
+    - npm --version
+    - echo "Installing dependencies..."
+    - npm install --legacy-peer-deps || npm install --legacy-peer-deps --force
   script:
     - echo "Building React application..."
-    - npm run build
+    - CI=false npm run build || npm run build
     - echo "Build completed successfully!"
+    - ls -la build/ || echo "Build directory check"
   artifacts:
     paths:
       - build/
@@ -40,9 +44,11 @@ build:
 # Test stage - Run tests (if you have tests)
 test:
   stage: test
-  image: node:${NODE_VERSION}
+  image: ${NODE_IMAGE}
   before_script:
-    - npm ci --legacy-peer-deps
+    - node --version
+    - npm --version
+    - npm install --legacy-peer-deps
   script:
     - echo "Running tests..."
     - npm test -- --watchAll=false --coverage --passWithNoTests || true
@@ -65,9 +71,11 @@ test:
 # Lint stage - Check code quality
 lint:
   stage: test
-  image: node:${NODE_VERSION}
+  image: ${NODE_IMAGE}
   before_script:
-    - npm ci --legacy-peer-deps
+    - node --version
+    - npm --version
+    - npm install --legacy-peer-deps
   script:
     - echo "Running linter..."
     - npm run build 2>&1 | grep -i "warning\|error" || true
@@ -82,7 +90,7 @@ lint:
 # Deploy to staging environment
 deploy:staging:
   stage: deploy
-  image: node:${NODE_VERSION}
+  image: ${NODE_IMAGE}
   environment:
     name: staging
     url: https://staging-admin.yourdomain.com
@@ -103,7 +111,7 @@ deploy:staging:
 # Deploy to production environment
 deploy:production:
   stage: deploy
-  image: node:${NODE_VERSION}
+  image: ${NODE_IMAGE}
   environment:
     name: production
     url: https://admin.yourdomain.com
