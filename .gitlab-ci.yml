@@ -108,20 +108,47 @@ deploy:staging:
   dependencies:
     - build
 
-# Deploy to production environment
+# Deploy to GitLab Pages (Free hosting)
+pages:
+  stage: deploy
+  image: ${NODE_IMAGE}
+  script:
+    - echo "Deploying to GitLab Pages..."
+    - mkdir -p public
+    - cp -r build/* public/
+    - echo "Deployment completed!"
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - master
+
+# Deploy to production environment (for custom server/cloud)
 deploy:production:
   stage: deploy
   image: ${NODE_IMAGE}
   environment:
     name: production
-    url: https://admin.yourdomain.com
+    url: https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}
   before_script:
     - echo "Preparing deployment to production..."
+    - echo "Build artifacts available in build/ directory"
   script:
     - echo "Deploying to production environment..."
+    - echo "Build directory contents:"
+    - ls -la build/ || echo "No build directory found"
     # Add your production deployment script here
-    # Example: rsync, scp, or cloud provider CLI commands
-    # - rsync -avz build/ user@production-server:/var/www/admin/
+    # Example for Vercel: Install Vercel CLI and deploy
+    # - npm install -g vercel
+    # - vercel --prod --token=$VERCEL_TOKEN
+    # Example for AWS S3:
+    # - apt-get update -qq && apt-get install -y -qq awscli
+    # - aws s3 sync build/ s3://$S3_BUCKET_NAME --delete
+    # Example for server via SSH:
+    # - apt-get update -qq && apt-get install -y -qq openssh-client rsync
+    # - mkdir -p ~/.ssh && echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    # - rsync -avz build/ $DEPLOY_USER@$DEPLOY_SERVER:/var/www/admin/
     - echo "Production deployment completed!"
   only:
     - main
