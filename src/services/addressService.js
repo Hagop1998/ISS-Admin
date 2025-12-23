@@ -15,7 +15,6 @@ const getHeaders = () => {
 
 export const addressService = {
   async getAddresses() {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/address`;
 
     const response = await fetch(url, {
@@ -33,7 +32,6 @@ export const addressService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -42,7 +40,6 @@ export const addressService = {
   },
 
   async createAddress(addressData) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/address`;
 
     const response = await fetch(url, {
@@ -61,7 +58,6 @@ export const addressService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.errors?.[0]?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -79,11 +75,7 @@ export const addressService = {
   },
 
   async updateAddress(id, addressData) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/address/${id}`;
-
-    // Log the request for debugging
-    console.log('PATCH request:', { url, addressData });
     
     const response = await fetch(url, {
       method: 'PATCH',
@@ -98,14 +90,9 @@ export const addressService = {
       }
       let errorMessage = 'Failed to update address';
       try {
-        const errorData = await response.json();
-        // Log the full error for debugging
-        console.error('Address update error:', errorData);
-        
-        // Handle nested error message objects
+        const errorData = await response.json();        
         if (errorData?.message) {
           if (typeof errorData.message === 'object') {
-            // If message is an object, try to extract validation errors
             const messageKeys = Object.keys(errorData.message);
             if (messageKeys.length > 0) {
               const firstError = errorData.message[messageKeys[0]];
@@ -124,8 +111,6 @@ export const addressService = {
           errorMessage = JSON.stringify(errorData);
         }
       } catch (error) {
-        // Ignore JSON parse error
-        console.error('Failed to parse error response:', error);
       }
       throw new Error(errorMessage);
     }
@@ -143,7 +128,6 @@ export const addressService = {
   },
 
   async getAddressById(id) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/address/${id}`;
 
     const response = await fetch(url, {
@@ -161,7 +145,6 @@ export const addressService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -170,7 +153,6 @@ export const addressService = {
   },
 
   async deleteAddress(id) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/address/${id}`;
 
     const response = await fetch(url, {
@@ -188,7 +170,6 @@ export const addressService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }

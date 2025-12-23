@@ -22,7 +22,6 @@ export const deviceService = {
       limit: limit.toString(),
     });
 
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/device?${queryParams}`;
 
     const response = await fetch(url, {
@@ -40,7 +39,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -49,7 +47,6 @@ export const deviceService = {
   },
 
   async getDeviceById(deviceId) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/device/${deviceId}`;
 
     const response = await fetch(url, {
@@ -67,7 +64,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -76,7 +72,6 @@ export const deviceService = {
   },
 
   async restartDevice(localId) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/restart`;
 
     const response = await fetch(url, {
@@ -95,12 +90,10 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
 
-    // Handle 204 No Content or JSON response
     if (response.status === 204) {
       return { success: true, message: 'Device restarted successfully' };
     }
@@ -114,7 +107,6 @@ export const deviceService = {
   },
 
   async unlockDevice(localId) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/middleware/unlock`;
 
     const response = await fetch(url, {
@@ -133,12 +125,10 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
 
-    // Handle 201 Created or JSON response
     if (response.status === 201) {
       return { success: true, message: 'Door unlocked successfully' };
     }
@@ -152,7 +142,6 @@ export const deviceService = {
   },
 
   async createDevice(deviceData) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/device`;
 
     const response = await fetch(url, {
@@ -171,12 +160,10 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.errors?.[0]?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
 
-    // Handle 204 No Content or JSON response
     if (response.status === 204) {
       return { success: true, message: 'Device created successfully' };
     }
@@ -190,7 +177,6 @@ export const deviceService = {
   },
 
   async updateDevice(deviceId, deviceData) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/device/${deviceId}`;
 
     const response = await fetch(url, {
@@ -209,12 +195,10 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.errors?.[0]?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
 
-    // Handle 204 No Content or JSON response
     if (response.status === 204) {
       return { success: true, message: 'Device updated successfully' };
     }
@@ -228,7 +212,6 @@ export const deviceService = {
   },
 
   async deleteDevice(deviceId) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/device/${deviceId}`;
 
     const response = await fetch(url, {
@@ -246,17 +229,14 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
 
-    // Return the deviceId for the slice to use
     return deviceId;
   },
 
   async setManagerCard(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/set_manager_card`;
 
     const response = await fetch(url, {
@@ -275,7 +255,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -292,7 +271,6 @@ export const deviceService = {
   },
 
   async setLiveCard(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/set_live_card`;
 
     const response = await fetch(url, {
@@ -311,7 +289,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -328,7 +305,6 @@ export const deviceService = {
   },
 
   async setICCard(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/set_IC_card`;
 
     const response = await fetch(url, {
@@ -347,7 +323,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -364,7 +339,6 @@ export const deviceService = {
   },
 
   async setIDCard(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/set_ID_card`;
 
     const response = await fetch(url, {
@@ -383,7 +357,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -400,7 +373,6 @@ export const deviceService = {
   },
 
   async upgradeSoftware(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/upgrade_software`;
 
     const response = await fetch(url, {
@@ -419,7 +391,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -436,7 +407,7 @@ export const deviceService = {
   },
 
   async upgradeConfig(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
+    // Always use /api path for development (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/upgrade_config`;
 
     const response = await fetch(url, {
@@ -455,7 +426,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -472,7 +442,6 @@ export const deviceService = {
   },
 
   async setServerInfo(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/set_server_info`;
 
     const response = await fetch(url, {
@@ -491,7 +460,6 @@ export const deviceService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -508,7 +476,6 @@ export const deviceService = {
   },
 
   async reloadSip(data) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/admin/middleware/reload_sip`;
 
     const response = await fetch(url, {
@@ -526,8 +493,7 @@ export const deviceService = {
       try {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
-      } catch (error) {
-        // Ignore JSON parse error
+      } catch (error) { 
       }
       throw new Error(errorMessage);
     }

@@ -15,7 +15,6 @@ const getHeaders = () => {
 
 export const subscriptionService = {
     async createUserSubscription(subscriptionData) {
-        // Always use /api path (proxied by Vercel in production, setupProxy in development)
         const url = `${API_BASE_PATH}/subscriptions/user-subscriptions`;
 
         const response = await fetch(url, {
@@ -43,7 +42,6 @@ export const subscriptionService = {
     },
 
     async updateUserSubscription(id, subscriptionData) {
-        // Always use /api path (proxied by Vercel in production, setupProxy in development)
         const url = `${API_BASE_PATH}/subscriptions/user-subscriptions/${id}`;
 
         const response = await fetch(url, {
@@ -62,7 +60,6 @@ export const subscriptionService = {
                 const errorData = await response.json();
                 errorMessage = errorData?.message || errorData?.error || errorMessage;
             } catch (error) {
-                // Ignore JSON parse error
             }
             throw new Error(errorMessage);
         }

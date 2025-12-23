@@ -24,7 +24,6 @@ export const userService = {
       ...(role && { role }),
     });
 
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/users?${queryParams}`;
 
     const response = await fetch(url, {
@@ -42,7 +41,6 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -59,7 +57,6 @@ export const userService = {
       addressId: addressId.toString(),
     });
 
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/users?${queryParams}`;
 
     const response = await fetch(url, {
@@ -77,7 +74,6 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -86,7 +82,6 @@ export const userService = {
   },
 
   async deleteUser(userId) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
@@ -104,12 +99,10 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
 
-    // Handle 204 No Content or JSON response
     if (response.status === 204) {
       return { success: true };
     }
@@ -122,7 +115,6 @@ export const userService = {
   },
 
   async changePassword(payload) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/users/change-password`;
 
     const response = await fetch(url, {
@@ -141,7 +133,6 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.error || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -150,7 +141,6 @@ export const userService = {
   },
 
   async updateUser(userId, userData) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
@@ -169,7 +159,6 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.error || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -178,7 +167,6 @@ export const userService = {
   },
 
   async verifyUser(userId) {
-    // Always use /api path (proxied by Vercel in production, setupProxy in development)
     const url = `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
@@ -197,7 +185,6 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.error || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }
@@ -228,7 +215,6 @@ export const userService = {
         const errorData = await response.json();
         errorMessage = errorData?.message || errorData?.error || errorMessage;
       } catch (error) {
-        // Ignore JSON parse error
       }
       throw new Error(errorMessage);
     }

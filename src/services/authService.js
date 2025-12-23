@@ -3,10 +3,6 @@ const API_BASE_PATH = process.env.REACT_APP_API_BASE_PATH || '/api';
 
 export const authService = {
   async login(credentials) {
-    // Use proxy in development and production to avoid CORS and mixed content issues
-    // In production (Vercel), use /api path which will be proxied to the backend
-    // Always use /api path in production (proxied by Vercel) to avoid mixed content errors
-    // In development, use proxy path
     const url = `${API_BASE_PATH}/auth/login`;
 
     const response = await fetch(url, {
@@ -28,7 +24,6 @@ export const authService = {
           errorData?.errors ||
           errorMessage;
       } catch (error) {
-        // Ignore JSON parse error and use default message
       }
       throw new Error(errorMessage);
     }
@@ -45,7 +40,6 @@ export const authService = {
       }
     }
 
-    // Standard API response expected: { status, message, data: { token, user } }
     if (data?.status && data.status !== 'success') {
       throw new Error(data?.message || 'Unable to login. Please try again.');
     }
