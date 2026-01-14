@@ -113,7 +113,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div>
             <button
               className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
-                isActive('/access-control/list')
+                isActive('/access-control/list') || isActive('/access-control/door-opening-record') || isActive('/access-control/users-face-list')
                   ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
                   : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
               }`}
@@ -146,8 +146,12 @@ const Sidebar = ({ isOpen, onClose }) => {
                   </svg>
                 </button>
                 <button
-                  className="w-full flex items-center justify-between px-3 py-2 rounded text-sm border border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40 transition"
-                  onClick={() => handleMenuClick('door-opening')}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm border transition ${
+                    isActive('/access-control/door-opening-record')
+                      ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                      : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                  }`}
+                  onClick={() => handleNavigation('/access-control/door-opening-record')}
                 >
                   <span>Door opening record</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,7 +242,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
 
           {/* Owner Mgt */}
-          <div>
+          {/* <div>
             <button
               className="w-full flex items-center justify-between px-3 py-2 rounded border border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40 transition"
               onClick={() => handleMenuClick('owner')}
@@ -253,10 +257,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-          </div>
+          </div> */}
 
           {/* Background Mgt */}
-          <div>
+          {/* <div>
             <button
               className="w-full flex items-center justify-between px-3 py-2 rounded border border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40 transition"
               onClick={() => handleMenuClick('background')}
@@ -271,7 +275,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-          </div>
+          </div> */}
 
           {/* User Management */}
           <div className="mt-4">

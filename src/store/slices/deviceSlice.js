@@ -227,6 +227,21 @@ export const reloadSip = createAsyncThunk(
   }
 );
 
+export const setDoor = createAsyncThunk(
+  'devices/setDoor',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.setDoor(data);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to set door configuration');
+    }
+  }
+);
+
 const initialState = {
   items: [],
   loading: false,
@@ -447,6 +462,17 @@ const deviceSlice = createSlice({
       .addCase(reloadSip.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to reload SIP';
+      })
+      .addCase(setDoor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setDoor.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setDoor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to set door configuration';
       });
   },
 });
