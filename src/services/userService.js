@@ -221,5 +221,37 @@ export const userService = {
 
     return response.json();
   },
+
+  async getUserHistory(params = {}) {
+    const { page = 1, limit = 10 } = params;
+    
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    const url = `${API_BASE_PATH}/user-history?${queryParams}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      let errorMessage = 'Failed to fetch user history';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
 };
 
