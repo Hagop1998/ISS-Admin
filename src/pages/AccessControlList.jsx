@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip } from 'antd';
-import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card } from 'antd';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
 import { restartDevice, createDevice, updateDevice } from '../store/slices/deviceSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
@@ -65,6 +65,15 @@ const AccessControlList = () => {
   const handleViewUsers = (record) => {
     setSelectedDevice(record);
     setIsUsersModalOpen(true);
+  };
+
+  const handleCustomSettings = (record) => {
+    const deviceId = record.id || record._id;
+    if (deviceId) {
+      navigate(`/access-control/configure/${deviceId}`);
+    } else {
+      message.error('Device ID is missing');
+    }
   };
 
   const remoteMenuItems = [
@@ -133,7 +142,7 @@ const AccessControlList = () => {
       title: 'N',
       dataIndex: 'id',
       key: 'id',
-      width: 50,
+      width: 60,
       align: 'center',
       fixed: 'left',
       sorter: (a, b) => a.id - b.id,
@@ -142,43 +151,44 @@ const AccessControlList = () => {
       title: 'Community Name',
       dataIndex: 'communityName',
       key: 'communityName',
-      width: 120,
-      ellipsis: true,
+      width: 150,
+      ellipsis: { showTitle: true },
     },
     {
       title: 'Installation Position',
       dataIndex: 'installationPosition',
       key: 'installationPosition',
-      width: 120,
-      ellipsis: true,
+      width: 150,
+      ellipsis: { showTitle: true },
     },
     {
       title: 'Access Control Name',
       dataIndex: 'accessControlName',
       key: 'accessControlName',
-      width: 120,
-      ellipsis: true,
+      width: 150,
+      ellipsis: { showTitle: true },
     },
     {
       title: 'Serial Number',
       dataIndex: 'serialNumber',
       key: 'serialNumber',
-      width: 140,
-      ellipsis: true,
+      width: 160,
+      ellipsis: { showTitle: true },
     },
     {
       title: 'Permission Values',
       dataIndex: 'permissionValues',
       key: 'permissionValues',
-      width: 100,
-      ellipsis: true,
+      width: 120,
+      align: 'center',
+      ellipsis: { showTitle: true },
     },
     {
       title: 'Last Online Time',
       dataIndex: 'lastOnlineTime',
       key: 'lastOnlineTime',
-      width: 150,
-      ellipsis: true,
+      width: 180,
+      ellipsis: { showTitle: true },
       render: (text) => {
         // Remove [1] prefix if present
         if (text && text.startsWith('[1] ')) {
@@ -191,19 +201,20 @@ const AccessControlList = () => {
       title: 'Label',
       dataIndex: 'label',
       key: 'label',
-      width: 80,
-      ellipsis: true,
+      width: 100,
+      ellipsis: { showTitle: true },
     },
     {
       title: 'State',
       dataIndex: 'state',
       key: 'state',
-      width: 80,
+      width: 100,
+      align: 'center',
       render: (state) => {
         const isOnline = state === 'Online';
         return (
-          <Tag color={isOnline ? 'success' : 'error'}>
-            {state}
+          <Tag color={isOnline ? 'success' : 'error'} style={{ margin: 0 }}>
+            {state || 'Offline'}
           </Tag>
         );
       },
@@ -211,8 +222,9 @@ const AccessControlList = () => {
     {
       title: 'Operation',
       key: 'operation',
-      width: 200,
+      width: 320,
       fixed: 'right',
+      align: 'center',
       render: (_, record) => {
         const isOnline = record.state === 'Online';
         return (
@@ -223,13 +235,32 @@ const AccessControlList = () => {
                 size="small"
                 icon={<UserOutlined />}
                 onClick={() => handleViewUsers(record)}
+                style={{ color: '#3C0056' }}
               />
+            </Tooltip>
+            <Tooltip title="Custom Settings">
+              <Button
+                type="default"
+                size="small"
+                icon={<SettingOutlined />}
+                onClick={() => handleCustomSettings(record)}
+                style={{ 
+                  borderColor: '#3C0056',
+                  color: '#3C0056'
+                }}
+              >
+                Custom Settings
+              </Button>
             </Tooltip>
             <Button
               type="primary"
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
+              style={{ 
+                backgroundColor: '#3C0056',
+                borderColor: '#3C0056'
+              }}
             >
               Edit
             </Button>
@@ -243,7 +274,13 @@ const AccessControlList = () => {
                 }}
                 trigger={['click']}
               >
-                <Button size="small">
+                <Button 
+                  size="small"
+                  style={{
+                    borderColor: '#3C0056',
+                    color: '#3C0056'
+                  }}
+                >
                   Remote <DownOutlined />
                 </Button>
               </Dropdown>
@@ -254,12 +291,15 @@ const AccessControlList = () => {
               onConfirm={() => handleDelete(record)}
               okText="Yes"
               cancelText="No"
+              okButtonProps={{ danger: true }}
             >
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                size="small"
-              />
+              <Tooltip title="Delete">
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  size="small"
+                />
+              </Tooltip>
             </Popconfirm>
           </Space>
         );
@@ -322,35 +362,46 @@ const AccessControlList = () => {
       </div>
 
       {/* Filter Bar */}
-      {/* <FilterBar /> */}
+      <div style={{ marginBottom: 16 }}>
+        <FilterBar />
+      </div>
 
       {/* Access Control Devices Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        <FilterBar />
-        <div className="overflow-x-auto">
-          <Table
-            columns={columns}
-            dataSource={items}
-            rowKey="id"
-            rowSelection={rowSelection}
-            loading={devicesLoading}
-            bordered={true}
-            pagination={{
-              current: pagination.currentPage,
-              pageSize: pagination.itemsPerPage,
-              total: pagination.totalItems,
-              showSizeChanger: true,
-              showTotal: (total, range) =>
-                `Showing ${range[0]} to ${range[1]} of ${total} entries`,
-              pageSizeOptions: ['10', '20', '50', '100'],
-            }}
-            onChange={handleTableChange}
-            scroll={{ x: 980 }}
-            className="access-control-table"
-            size="small"
-          />
-        </div>
-      </div>
+      <Card
+        className="shadow-md"
+        bodyStyle={{ padding: 0 }}
+        headStyle={{ 
+          backgroundColor: '#f8f9fa', 
+          borderBottom: '2px solid #3C0056',
+          padding: '16px 24px'
+        }}
+      >
+        <Table
+          columns={columns}
+          dataSource={items}
+          rowKey="id"
+          rowSelection={rowSelection}
+          loading={devicesLoading}
+          bordered={false}
+          pagination={{
+            current: pagination.currentPage,
+            pageSize: pagination.itemsPerPage,
+            total: pagination.totalItems,
+            showSizeChanger: true,
+            showTotal: (total, range) =>
+              `Showing ${range[0]} to ${range[1]} of ${total} entries`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            style: { padding: '16px 24px' },
+          }}
+          onChange={handleTableChange}
+          scroll={{ x: 'max-content' }}
+          className="access-control-table"
+          size="middle"
+          rowClassName={(record, index) => 
+            index % 2 === 0 ? 'table-row-light' : 'table-row-dark'
+          }
+        />
+      </Card>
 
       {/* Add Access Control Modal */}
       <AddAccessControlModal
