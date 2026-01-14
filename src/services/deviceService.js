@@ -508,5 +508,39 @@ export const deviceService = {
       return { success: true, message: 'SIP reloaded successfully' };
     }
   },
+
+  async setDoor(data) {
+    const url = `${API_BASE_PATH}/admin/middleware/set_door`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      let errorMessage = 'Failed to set door configuration';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+      return { success: true, message: 'Door configuration updated successfully' };
+    }
+
+    try {
+      return await response.json();
+    } catch (error) {
+      return { success: true, message: 'Door configuration updated successfully' };
+    }
+  },
 };
 
