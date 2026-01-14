@@ -94,6 +94,51 @@
   margin-left: 4px !important;
 }
 
+/* Table Row Styling */
+.table-row-light {
+  background-color: #ffffff !important;
+}
+
+.table-row-dark {
+  background-color: #fafafa !important;
+}
+
+.access-control-table .ant-table-tbody > tr:hover > td {
+  background-color: #f5f0ff !important;
+  cursor: pointer;
+}
+
+.access-control-table .ant-table-tbody > tr.table-row-light:hover > td {
+  background-color: #f5f0ff !important;
+}
+
+.access-control-table .ant-table-tbody > tr.table-row-dark:hover > td {
+  background-color: #f0e6ff !important;
+}
+
+.access-control-table .ant-table-thead > tr > th {
+  background-color: #f8f9fa !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+  padding: 16px 12px !important;
+  border-bottom: 2px solid #e5e7eb !important;
+}
+
+.access-control-table .ant-table-tbody > tr > td {
+  padding: 16px 12px !important;
+  font-size: 14px !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.access-control-table .ant-table {
+  border: none !important;
+}
+
+.access-control-table .ant-table-container {
+  border: none !important;
+}
+
 .ant-pagination-item-active {
   border-color: #3C0056 !important;
 }
