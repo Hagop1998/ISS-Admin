@@ -15,6 +15,8 @@ import CardSettings from './pages/CardSettings';
 import PersonalData from './pages/PersonalData';
 import ChangePassword from './pages/ChangePassword';
 import Home from './pages/Home';
+import DoorOpeningRecord from './pages/DoorOpeningRecord';
+import DoorConfiguration from './pages/DoorConfiguration';
 import './App.css';
 
 const ProtectedLayout = () => {
@@ -65,6 +67,8 @@ function App() {
             <Route element={<ProtectedLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/access-control/list" element={<AccessControlList />} />
+              <Route path="/access-control/configure/:deviceId" element={<DoorConfiguration />} />
+              <Route path="/access-control/door-opening-record" element={<DoorOpeningRecord />} />
               <Route path="/access-control/users-face-list" element={<UsersFaceList />} />
               <Route path="/community/overview" element={<CommunityOverview />} />
               <Route path="/addresses" element={<AddressesList />} />
