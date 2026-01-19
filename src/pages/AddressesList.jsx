@@ -6,6 +6,7 @@ import { HomeOutlined, DeleteOutlined, PlusOutlined, EditOutlined, UserOutlined,
 import { fetchAddresses, createAddress, updateAddress, deleteAddress } from '../store/slices/addressSlice';
 import AddAddressModal from '../components/Addresses/AddAddressModal';
 import AddressUsersModal from '../components/Addresses/AddressUsersModal';
+import AddressDetailsModal from '../components/Addresses/AddressDetailsModal';
 
 const { Title, Text } = Typography;
 
@@ -18,8 +19,10 @@ const AddressesList = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [detailsAddress, setDetailsAddress] = useState(null);
 
   // Fetch addresses on mount
   useEffect(() => {
@@ -96,6 +99,19 @@ const AddressesList = () => {
     setIsUsersModalOpen(true);
   };
 
+  const handleViewDetails = (address) => {
+    setDetailsAddress(address);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleViewUsersFromDetails = () => {
+    if (detailsAddress) {
+      setIsDetailsModalOpen(false);
+      setSelectedAddress(detailsAddress);
+      setIsUsersModalOpen(true);
+    }
+  };
+
   const handleAssignToManager = async (address) => {
     try {
       const addressId = address._id || address.id;
@@ -135,7 +151,7 @@ const AddressesList = () => {
       render: (text, record) => (
         <Text 
           className="cursor-pointer hover:text-blue-500" 
-          onClick={() => handleViewUsers(record)}
+          onClick={() => handleViewDetails(record)}
           ellipsis={{ tooltip: text }}
         >
           {text || 'No address provided'}
@@ -314,6 +330,20 @@ const AddressesList = () => {
               // You can add pagination logic here if needed
             },
           }}
+          onRow={(record) => ({
+            onClick: (e) => {
+              // Don't trigger if clicking on button or action
+              if (
+                e.target.closest('button') ||
+                e.target.closest('.ant-popover') ||
+                e.target.closest('.ant-tooltip')
+              ) {
+                return;
+              }
+              handleViewDetails(record);
+            },
+            style: { cursor: 'pointer' },
+          })}
           scroll={{ x: 'max-content' }}
           locale={{
             emptyText: 'No addresses found. Click "+ Add Address" to create one.',
@@ -349,6 +379,17 @@ const AddressesList = () => {
           setSelectedAddress(null);
         }}
         address={selectedAddress}
+      />
+
+      {/* Address Details Modal */}
+      <AddressDetailsModal
+        open={isDetailsModalOpen}
+        onCancel={() => {
+          setIsDetailsModalOpen(false);
+          setDetailsAddress(null);
+        }}
+        address={detailsAddress}
+        onViewUsers={handleViewUsersFromDetails}
       />
     </div>
   );

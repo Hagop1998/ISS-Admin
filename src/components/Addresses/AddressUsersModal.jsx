@@ -1,58 +1,97 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Table, message, Spin } from 'antd';
+import { Modal, Table, message, Spin, Tag } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
-import { getAddressById } from '../../store/slices/addressSlice';
+import { fetchDevices } from '../../store/slices/accessControlSlice';
+import { getDeviceById } from '../../store/slices/deviceSlice';
+import { fetchUsers } from '../../store/slices/userSlice';
 
 const AddressUsersModal = ({ open, onCancel, address }) => {
   const dispatch = useDispatch();
-  const [userSubscriptions, setUserSubscriptions] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open && address) {
-      fetchUserSubscriptions();
+      fetchUsersForAddress();
     } else {
-      setUserSubscriptions([]);
+      setUsers([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, address]);
 
-  const fetchUserSubscriptions = async () => {
+  const fetchUsersForAddress = async () => {
     setLoading(true);
     try {
       const addressId = address?.id || address?._id;
       if (!addressId) {
-        setUserSubscriptions([]);
+        setUsers([]);
         setLoading(false);
         return;
       }
 
-      // Call address/{id} endpoint to get full address details with userSubscriptions
-      const addressDetails = await dispatch(getAddressById(addressId)).unwrap();
+      // Step 1: Fetch all devices and filter by addressId
+      const devicesResponse = await dispatch(fetchDevices({ page: 1, limit: 100 })).unwrap();
+      const devices = devicesResponse?.data || devicesResponse?.results || devicesResponse?.items || (Array.isArray(devicesResponse) ? devicesResponse : []);
       
-      // Extract userSubscriptions from device
-      let subscriptions = [];
-      if (addressDetails?.device?.userSubscriptions && Array.isArray(addressDetails.device.userSubscriptions)) {
-        subscriptions = addressDetails.device.userSubscriptions.map((subscription) => ({
-          key: subscription.id || `${subscription.userId}-${subscription.deviceId}`,
-          userId: subscription.userId,
-          deviceId: subscription.deviceId,
-          subscriptionId: subscription.subscriptionId,
-          status: subscription.status,
-          createdAt: subscription.createdAt,
-          expireDate: subscription.expireDate,
-          // These will be populated when backend adds user data
-          userName: subscription.user?.name || subscription.user?.firstName || null,
-          userEmail: subscription.user?.email || null,
-        }));
+      // Filter devices for this address
+      const devicesAtAddress = devices.filter(device => {
+        const deviceAddressId = device.addressId || device.address?.id || device.address?._id;
+        return deviceAddressId == addressId;
+      });
+
+      if (devicesAtAddress.length === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
       }
+
+      // Step 2: Get user subscriptions from all devices at this address
+      const userIds = new Set();
       
-      setUserSubscriptions(subscriptions);
+      for (const device of devicesAtAddress) {
+        try {
+          const deviceId = device.id || device._id;
+          if (!deviceId) continue;
+
+          const deviceDetails = await dispatch(getDeviceById(deviceId)).unwrap();
+          const deviceData = deviceDetails?.data || deviceDetails?.device || deviceDetails;
+          
+          // Extract user IDs from userSubscriptions
+          if (deviceData?.userSubscriptions && Array.isArray(deviceData.userSubscriptions)) {
+            deviceData.userSubscriptions.forEach(subscription => {
+              if (subscription.userId) {
+                userIds.add(subscription.userId);
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching device ${device.id}:`, error);
+          // Continue with other devices
+        }
+      }
+
+      if (userIds.size === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Fetch all users and filter by the collected user IDs
+      const allUsersResponse = await dispatch(fetchUsers({ page: 1, limit: 100 })).unwrap();
+      const allUsers = allUsersResponse?.data || allUsersResponse?.users || allUsersResponse?.results || (Array.isArray(allUsersResponse) ? allUsersResponse : []);
+      
+      // Filter users that are in our userIds set
+      const filteredUsers = allUsers.filter(user => {
+        const userId = user.id || user._id;
+        return userIds.has(userId);
+      });
+
+      setUsers(filteredUsers);
     } catch (error) {
-      console.error('Error fetching user subscriptions:', error);
-      message.error(error.message || 'Failed to fetch user subscriptions');
-      setUserSubscriptions([]);
+      console.error('Error fetching users for address:', error);
+      message.error(error.message || 'Failed to fetch users');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -60,22 +99,41 @@ const AddressUsersModal = ({ open, onCancel, address }) => {
 
   const columns = [
     {
-      title: 'User ID',
-      dataIndex: 'userId',
-      key: 'userId',
-      width: 100,
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 80,
     },
     {
-      title: 'Device ID',
-      dataIndex: 'deviceId',
-      key: 'deviceId',
-      width: 100,
-    },
-    {
-      title: 'Subscription ID',
-      dataIndex: 'subscriptionId',
-      key: 'subscriptionId',
+      title: 'First Name',
+      dataIndex: 'firstName',
+      key: 'firstName',
       width: 120,
+    },
+    {
+      title: 'Last Name',
+      dataIndex: 'lastName',
+      key: 'lastName',
+      width: 120,
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      width: 200,
+    },
+    {
+      title: 'Phone',
+      dataIndex: 'phone',
+      key: 'phone',
+      width: 150,
+    },
+    {
+      title: 'Role',
+      dataIndex: 'role',
+      key: 'role',
+      width: 120,
+      render: (role) => <Tag>{role || '-'}</Tag>,
     },
     {
       title: 'Status',
@@ -83,15 +141,20 @@ const AddressUsersModal = ({ open, onCancel, address }) => {
       key: 'status',
       width: 100,
       render: (status) => (
-        <span
-          className={`px-2 py-1 rounded text-xs font-semibold ${
-            status === 'active'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}
-        >
-          {status || 'N/A'}
-        </span>
+        <Tag color={status === 1 || status === true ? 'success' : 'default'}>
+          {status === 1 || status === true ? 'Active' : 'Inactive'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Verified',
+      dataIndex: 'isVerified',
+      key: 'isVerified',
+      width: 100,
+      render: (isVerified) => (
+        <Tag color={isVerified ? 'success' : 'default'}>
+          {isVerified ? 'Yes' : 'No'}
+        </Tag>
       ),
     },
   ];
@@ -113,16 +176,17 @@ const AddressUsersModal = ({ open, onCancel, address }) => {
       <Spin spinning={loading}>
         <Table
           columns={columns}
-          dataSource={userSubscriptions}
-          rowKey="key"
+          dataSource={users}
+          rowKey={(record) => record.id || record._id}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} subscriptions`,
+            showTotal: (total) => `Total: ${total} users`,
+            pageSizeOptions: ['10', '20', '50', '100'],
           }}
           scroll={{ x: 'max-content' }}
           locale={{
-            emptyText: 'No user subscriptions found for this address',
+            emptyText: 'No users found for this address',
           }}
           size="small"
           bordered
