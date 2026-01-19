@@ -115,9 +115,7 @@ const UsersList = () => {
       // First verify the user
       await dispatch(verifyUser(userId)).unwrap();
 
-      // Only create subscription if hasSubscription is true
       if (hasSubscription === true && subscriptionId) {
-        // Fetch devices using Redux action if not already loaded
         let devicesList = devices || [];
         if (!devices || devices.length === 0) {
           const devicesResponse = await dispatch(fetchDevices({ page: 1, limit: 100 })).unwrap();
