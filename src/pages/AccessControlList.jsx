@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card, Modal } from 'antd';
-import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined } from '@ant-design/icons';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined, EyeOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
 import { restartDevice, updateDevice, unlockDevice } from '../store/slices/deviceSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
 import AddAccessControlModal from '../components/AccessControl/AddAccessControlModal';
 import DeviceUsersModal from '../components/Devices/DeviceUsersModal';
+import DeviceDetailsModal from '../components/Devices/DeviceDetailsModal';
 
 const { Title } = Typography;
 
@@ -21,6 +22,8 @@ const AccessControlList = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchDevices({
@@ -63,6 +66,16 @@ const AccessControlList = () => {
   const handleViewUsers = (record) => {
     setSelectedDevice(record);
     setIsUsersModalOpen(true);
+  };
+
+  const handleViewDetails = (record) => {
+    const deviceId = record.id || record._id;
+    if (deviceId) {
+      setSelectedDeviceId(deviceId);
+      setIsDetailsModalOpen(true);
+    } else {
+      message.error('Device ID is missing');
+    }
   };
 
   const handleCustomSettings = (record) => {
@@ -216,6 +229,12 @@ const AccessControlList = () => {
         const isOnline = record.state === 'Online';
         
         const menuItems = [
+          {
+            key: 'viewDetails',
+            label: 'View Details',
+            icon: <EyeOutlined />,
+            onClick: () => handleViewDetails(record),
+          },
           {
             key: 'viewUsers',
             label: 'View Users',
@@ -371,6 +390,21 @@ const AccessControlList = () => {
             style: { padding: '16px 24px' },
           }}
           onChange={handleTableChange}
+          onRow={(record) => ({
+            onClick: (e) => {
+              // Don't trigger if clicking on checkbox, button, or dropdown
+              if (
+                e.target.closest('.ant-checkbox-wrapper') ||
+                e.target.closest('button') ||
+                e.target.closest('.ant-dropdown') ||
+                e.target.closest('.ant-dropdown-trigger')
+              ) {
+                return;
+              }
+              handleViewDetails(record);
+            },
+            style: { cursor: 'pointer' },
+          })}
           scroll={{ x: 'max-content' }}
           className="access-control-table"
           size="middle"
@@ -423,6 +457,15 @@ const AccessControlList = () => {
           setSelectedDevice(null);
         }}
         device={selectedDevice}
+      />
+
+      <DeviceDetailsModal
+        open={isDetailsModalOpen}
+        onCancel={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedDeviceId(null);
+        }}
+        deviceId={selectedDeviceId}
       />
     </div>
   );
