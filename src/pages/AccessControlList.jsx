@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card } from 'antd';
-import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card, Modal } from 'antd';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
 import { restartDevice, createDevice, updateDevice } from '../store/slices/deviceSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
@@ -36,7 +36,6 @@ const AccessControlList = () => {
     }
   }, [token, navigate]);
 
-  // Show error messages
   useEffect(() => {
     if (devicesError) {
       message.error(devicesError);
@@ -122,14 +121,12 @@ const AccessControlList = () => {
   const handleRemoteAction = async (action, record) => {
     try {
       if (action === 'Restart') {
-        // Use localId from record (mapped from API response)
         const localId = record.localId || record.serialNumber || '001';
         
         message.loading({ content: 'Restarting device...', key: 'restart' });
         const result = await dispatch(restartDevice(localId)).unwrap();
         message.success({ content: result.message || 'Device restarted successfully', key: 'restart' });
       } else {
-        // For other actions, show info message (to be implemented later)
         message.info(`${action} for device ${record.serialNumber}`);
       }
     } catch (error) {
@@ -190,7 +187,6 @@ const AccessControlList = () => {
       width: 180,
       ellipsis: { showTitle: true },
       render: (text) => {
-        // Remove [1] prefix if present
         if (text && text.startsWith('[1] ')) {
           return text.substring(4);
         }
@@ -222,86 +218,85 @@ const AccessControlList = () => {
     {
       title: 'Operation',
       key: 'operation',
-      width: 320,
+      width: 100,
       fixed: 'right',
       align: 'center',
       render: (_, record) => {
         const isOnline = record.state === 'Online';
+        
+        const menuItems = [
+          {
+            key: 'viewUsers',
+            label: 'View Users',
+            icon: <UserOutlined />,
+            onClick: () => handleViewUsers(record),
+          },
+          {
+            key: 'customSettings',
+            label: 'Custom Settings',
+            icon: <SettingOutlined />,
+            onClick: () => handleCustomSettings(record),
+          },
+          {
+            key: 'edit',
+            label: 'Edit',
+            icon: <EditOutlined />,
+            onClick: () => handleEdit(record),
+          },
+        ];
+
+        if (isOnline) {
+          menuItems.push({
+            key: 'remote',
+            label: 'Remote',
+            icon: <DownOutlined />,
+            children: remoteMenuItems.map(item => ({
+              key: item.key,
+              label: item.label,
+              onClick: () => handleRemoteAction(item.label, record),
+            })),
+          });
+        }
+
+        menuItems.push({
+          type: 'divider',
+        });
+        menuItems.push({
+          key: 'delete',
+          label: (
+            <span style={{ color: '#ff4d4f' }}>
+              <DeleteOutlined /> Delete
+            </span>
+          ),
+          danger: true,
+          onClick: () => {
+            Modal.confirm({
+              title: 'Delete this access control device?',
+              content: 'Are you sure you want to delete this entry?',
+              okText: 'Yes',
+              cancelText: 'No',
+              okType: 'danger',
+              onOk: () => handleDelete(record),
+            });
+          },
+        });
+
         return (
-          <Space size="small" wrap>
-            <Tooltip title="View Users">
-              <Button
-                type="text"
-                size="small"
-                icon={<UserOutlined />}
-                onClick={() => handleViewUsers(record)}
-                style={{ color: '#3C0056' }}
-              />
-            </Tooltip>
-            <Tooltip title="Custom Settings">
-              <Button
-                type="default"
-                size="small"
-                icon={<SettingOutlined />}
-                onClick={() => handleCustomSettings(record)}
-                style={{ 
-                  borderColor: '#3C0056',
-                  color: '#3C0056'
-                }}
-              >
-                Custom Settings
-              </Button>
-            </Tooltip>
+          <Dropdown
+            menu={{ items: menuItems }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
             <Button
-              type="primary"
+              type="text"
+              icon={<MenuOutlined />}
               size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-              style={{ 
-                backgroundColor: '#3C0056',
-                borderColor: '#3C0056'
+              style={{
+                color: '#3C0056',
+                border: '1px solid #d9d9d9',
               }}
-            >
-              Edit
-            </Button>
-            {isOnline && (
-              <Dropdown
-                menu={{
-                  items: remoteMenuItems.map(item => ({
-                    ...item,
-                    onClick: () => handleRemoteAction(item.label, record),
-                  })),
-                }}
-                trigger={['click']}
-              >
-                <Button 
-                  size="small"
-                  style={{
-                    borderColor: '#3C0056',
-                    color: '#3C0056'
-                  }}
-                >
-                  Remote <DownOutlined />
-                </Button>
-              </Dropdown>
-            )}
-            <Popconfirm
-              title="Delete this access control device?"
-              description="Are you sure you want to delete this entry?"
-              onConfirm={() => handleDelete(record)}
-              okText="Yes"
-              cancelText="No"
-              okButtonProps={{ danger: true }}
-            >
-              <Tooltip title="Delete">
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  size="small"
-                />
-              </Tooltip>
-            </Popconfirm>
-          </Space>
+            />
+          </Dropdown>
         );
       },
     },
@@ -333,7 +328,6 @@ const AccessControlList = () => {
         style={{ marginBottom: 24 }}
       />
 
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
           Access Control List
@@ -347,26 +341,13 @@ const AccessControlList = () => {
           >
             Add Access Control
           </Button>
-          {/* <Button
-            icon={<ReloadOutlined />}
-            size="large"
-            onClick={() => dispatch(fetchDevices({
-              page: pagination.currentPage,
-              limit: pagination.itemsPerPage,
-            }))}
-            loading={devicesLoading}
-          >
-            Refresh
-          </Button> */}
         </Space>
       </div>
 
-      {/* Filter Bar */}
       <div style={{ marginBottom: 16 }}>
         <FilterBar />
       </div>
 
-      {/* Access Control Devices Table */}
       <Card
         className="shadow-md"
         bodyStyle={{ padding: 0 }}
@@ -403,23 +384,21 @@ const AccessControlList = () => {
         />
       </Card>
 
-      {/* Add Access Control Modal */}
       <AddAccessControlModal
         open={isAddModalOpen}
         onCancel={() => setIsAddModalOpen(false)}
         mode="add"
         onSubmit={async (values) => {
           try {
-            const managerId = user?.id || 1; // Get managerId from auth user or default to 1
+            const managerId = user?.id || 1; 
 
-            // Map form values to API request structure - ensure correct types
             const deviceData = {
-              managerId: Number(managerId), // Ensure it's a number
-              addressId: Number(values.community), // Ensure it's a number
-              localId: String(values.serialNumber || ''), // Ensure it's a string
-              sector: String(values.sector || 'Sector1'), // Ensure it's a string
-              sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), // Ensure it's a string
-              deviceType: String(values.deviceType || 'door'), // Ensure it's a string
+              managerId: Number(managerId), 
+              addressId: Number(values.community), 
+              localId: String(values.serialNumber || ''), 
+              sector: String(values.sector || 'Sector1'), 
+              sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), 
+              deviceType: String(values.deviceType || 'door'), 
             };
 
             message.loading({ content: 'Creating device...', key: 'create' });
@@ -427,7 +406,6 @@ const AccessControlList = () => {
             message.success({ content: 'Access control device created successfully', key: 'create' });
             setIsAddModalOpen(false);
             
-            // Refresh the device list
             dispatch(fetchDevices({
               page: pagination.currentPage,
               limit: pagination.itemsPerPage,
@@ -438,7 +416,6 @@ const AccessControlList = () => {
         }}
       />
 
-      {/* Edit Access Control Modal */}
       <AddAccessControlModal
         open={isEditModalOpen}
         onCancel={() => {
@@ -449,16 +426,14 @@ const AccessControlList = () => {
         deviceId={editingDevice?.id}
         onSubmit={async (values) => {
           try {
-            const managerId = user?.id || 1; // Get managerId from auth user or default to 1
-
-            // Map form values to API request structure - ensure correct types
+            const managerId = user?.id || 1; 
             const deviceData = {
-              managerId: Number(managerId), // Ensure it's a number
-              addressId: Number(values.community), // Ensure it's a number
-              localId: String(values.serialNumber || ''), // Ensure it's a string
-              sector: String(values.sector || 'Sector1'), // Ensure it's a string
-              sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), // Ensure it's a string
-              deviceType: String(values.deviceType || 'door'), // Ensure it's a string
+              managerId: Number(managerId), 
+              addressId: Number(values.community), 
+              localId: String(values.serialNumber || ''), 
+              sector: String(values.sector || 'Sector1'), 
+              sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), 
+              deviceType: String(values.deviceType || 'door'), 
             };
 
             message.loading({ content: 'Updating device...', key: 'update' });
@@ -467,7 +442,6 @@ const AccessControlList = () => {
             setIsEditModalOpen(false);
             setEditingDevice(null);
             
-            // Refresh the device list
             dispatch(fetchDevices({
               page: pagination.currentPage,
               limit: pagination.itemsPerPage,
@@ -478,7 +452,6 @@ const AccessControlList = () => {
         }}
       />
 
-      {/* Device Users Modal */}
       <DeviceUsersModal
         open={isUsersModalOpen}
         onCancel={() => {
