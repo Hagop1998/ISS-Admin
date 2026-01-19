@@ -206,7 +206,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div>
             <button
               className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
-                isActive('/device-manager') || isActive('/device-manager/devices') || isActive('/device-manager/device-config') || isActive('/device-manager/card-settings')
+                isActive('/device-manager') || isActive('/device-manager/devices') || isActive('/device-manager/device-config')
                   ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
                   : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
               }`}
@@ -240,19 +240,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm border transition ${
-                    isActive('/device-manager/card-settings')
-                      ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
-                      : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
-                  }`}
-                  onClick={() => handleNavigation('/device-manager/card-settings')}
-                >
-                  <span>Card Settings</span>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <button
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm border transition ${
                     isActive('/device-manager/device-config')
                       ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
                       : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
@@ -268,60 +255,25 @@ const Sidebar = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Owner Mgt */}
-          {/* <div>
-            <button
-              className="w-full flex items-center justify-between px-3 py-2 rounded border border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40 transition"
-              onClick={() => handleMenuClick('owner')}
-            >
-              <span>Owner Mgt</span>
-              <svg
-                className={`w-4 h-4 transition-transform ${isExpanded('owner') ? 'rotate-90' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div> */}
-
-          {/* Background Mgt */}
-          {/* <div>
-            <button
-              className="w-full flex items-center justify-between px-3 py-2 rounded border border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40 transition"
-              onClick={() => handleMenuClick('background')}
-            >
-              <span>Background Mgt</span>
-              <svg
-                className={`w-4 h-4 transition-transform ${isExpanded('background') ? 'rotate-90' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div> */}
-
-          {/* User Management */}
+          {/* Card Settings */}
           <div className="mt-4">
             <button
               className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
-                isActive('/users')
+                isActive('/device-manager/card-settings')
                   ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
                   : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
               }`}
-              onClick={() => handleNavigation('/users')}
+              onClick={() => handleNavigation('/device-manager/card-settings')}
             >
               <div className="flex items-center space-x-2">
-                <UserOutlined className="w-5 h-5" />
-                <span>User Management</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <span>Card Settings</span>
               </div>
             </button>
           </div>
 
-          {/* User Settings */}
           <div className="mt-4">
             <button
               className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
