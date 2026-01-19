@@ -113,13 +113,13 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div>
             <button
               className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
-                isActive('/access-control/list') || isActive('/device-manager/device-config')
+                isActive('/access-control/list') || isActive('/device-manager/device-config') || isActive('/access-control/custom-settings')
                   ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
                   : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
               }`}
               onClick={() => handleMenuClick('access-control')}
             >
-              <span>Access Control Mgt</span>
+              <span>Device Control</span>
               <svg
                 className={`w-4 h-4 transition-transform ${isExpanded('access-control') ? 'rotate-90' : ''}`}
                 fill="none"
@@ -140,7 +140,20 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/access-control/list')}
                 >
-                  <span>Access Control List</span>
+                  <span>Devices List</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <button
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm border transition ${
+                    isActive('/access-control/custom-settings')
+                      ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                      : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                  }`}
+                  onClick={() => handleNavigation('/access-control/custom-settings')}
+                >
+                  <span>Custom Settings</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>

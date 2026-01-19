@@ -84,7 +84,7 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
       onCancel={handleCancel}
       footer={null}
       width={800}
-      destroyOnClose
+      destroyOnHidden
       confirmLoading={loading}
     >
       <Form

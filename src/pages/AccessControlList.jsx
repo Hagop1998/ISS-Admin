@@ -235,7 +235,14 @@ const AccessControlList = () => {
             key: 'customSettings',
             label: 'Custom Settings',
             icon: <SettingOutlined />,
-            onClick: () => handleCustomSettings(record),
+            onClick: () => {
+              const deviceId = record.id || record._id;
+              if (deviceId) {
+                navigate(`/access-control/custom-settings/${deviceId}`);
+              } else {
+                navigate('/access-control/custom-settings');
+              }
+            },
           },
           {
             key: 'edit',
@@ -350,11 +357,13 @@ const AccessControlList = () => {
 
       <Card
         className="shadow-md"
-        bodyStyle={{ padding: 0 }}
-        headStyle={{ 
-          backgroundColor: '#f8f9fa', 
-          borderBottom: '2px solid #3C0056',
-          padding: '16px 24px'
+        styles={{ 
+          body: { padding: 0 },
+          header: { 
+            backgroundColor: '#f8f9fa', 
+            borderBottom: '2px solid #3C0056',
+            padding: '16px 24px'
+          }
         }}
       >
         <Table
