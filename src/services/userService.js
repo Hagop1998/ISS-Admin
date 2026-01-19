@@ -173,7 +173,7 @@ export const userService = {
       method: 'PATCH',
       headers: getHeaders(),
       credentials: 'include',
-      body: JSON.stringify({ isVerified: true }),
+      body: JSON.stringify({ isVerified: true , status: 1 }),
     });
 
     if (!response.ok) {

@@ -289,7 +289,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <div className="flex items-center space-x-2">
                 <UserOutlined className="w-5 h-5" />
-                <span>User Managemendddt</span>
+                <span>User Management</span>
               </div>
             </button>
           </div>

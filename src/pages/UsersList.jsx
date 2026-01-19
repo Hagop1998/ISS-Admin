@@ -99,6 +99,8 @@ const UsersList = () => {
     try {
       const userId = userToVerify._id || userToVerify.id;
       const addressId = formValues.addressId;
+      const hasSubscription = formValues.hasSubscription; 
+      const subscriptionId = formValues.subscriptionId; 
 
       if (!userId) {
         message.error('User ID is missing');
@@ -110,37 +112,42 @@ const UsersList = () => {
         return;
       }
 
-      // Fetch devices using Redux action if not already loaded
-      let devicesList = devices || [];
-      if (!devices || devices.length === 0) {
-        const devicesResponse = await dispatch(fetchDevices({ page: 1, limit: 100 })).unwrap();
-        devicesList = devicesResponse?.results || devicesResponse?.data || (Array.isArray(devicesResponse) ? devicesResponse : []);
-      }
-      
-      // Filter device by addressId
-      const device = devicesList.find(dev => (dev.addressId || dev.address?.id || dev.address?._id) == addressId);
-      
-      if (!device || !device.id) {
-        message.error('No device found for the selected address. Please ensure the address has a device assigned.');
-        return;
-      }
-
-      const deviceId = device.id;
-      const subscriptionId = 1; 
-
       // First verify the user
       await dispatch(verifyUser(userId)).unwrap();
 
-      // Create user subscription using Redux action
-      const subscriptionData = {
-        userId: Number(userId),
-        subscriptionId: subscriptionId,
-        deviceId: Number(deviceId),
-      };
+      // Only create subscription if hasSubscription is true
+      if (hasSubscription === true && subscriptionId) {
+        // Fetch devices using Redux action if not already loaded
+        let devicesList = devices || [];
+        if (!devices || devices.length === 0) {
+          const devicesResponse = await dispatch(fetchDevices({ page: 1, limit: 100 })).unwrap();
+          devicesList = devicesResponse?.results || devicesResponse?.data || (Array.isArray(devicesResponse) ? devicesResponse : []);
+        }
+        
+        // Filter device by addressId
+        const device = devicesList.find(dev => (dev.addressId || dev.address?.id || dev.address?._id) == addressId);
+        
+        if (!device || !device.id) {
+          message.error('No device found for the selected address. Please ensure the address has a device assigned.');
+          return;
+        }
 
-      await dispatch(createUserSubscription(subscriptionData)).unwrap();
+        const deviceId = device.id;
+
+        // Create user subscription using Redux action
+        const subscriptionData = {
+          userId: Number(userId),
+          subscriptionId: subscriptionId,
+          deviceId: Number(deviceId),
+        };
+
+        await dispatch(createUserSubscription(subscriptionData)).unwrap();
+        message.success('User verified and subscription created successfully.');
+      } else {
+        // Verify user without subscription (subscriptionId is null)
+        message.success('User verified successfully without subscription.');
+      }
       
-      message.success('User verified and subscription created successfully.');
       setIsSelectAddressModalOpen(false);
       setUserToVerify(null);
 
