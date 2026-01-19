@@ -168,11 +168,15 @@ const AccessControlList = () => {
       ellipsis: { showTitle: true },
     },
     {
-      title: 'Installation Position',
-      dataIndex: 'installationPosition',
-      key: 'installationPosition',
-      width: 150,
+      title: 'Installation Position/Label',
+      key: 'installationPositionLabel',
+      width: 180,
       ellipsis: { showTitle: true },
+      render: (_, record) => {
+        const installationPosition = record.installationPosition || '-';
+        const label = record.label || '-';
+        return `${installationPosition}/${label}`;
+      },
     },
     {
       title: 'Access Control Name',
@@ -186,34 +190,6 @@ const AccessControlList = () => {
       dataIndex: 'serialNumber',
       key: 'serialNumber',
       width: 160,
-      ellipsis: { showTitle: true },
-    },
-    {
-      title: 'Permission Values',
-      dataIndex: 'permissionValues',
-      key: 'permissionValues',
-      width: 120,
-      align: 'center',
-      ellipsis: { showTitle: true },
-    },
-    {
-      title: 'Last Online Time',
-      dataIndex: 'lastOnlineTime',
-      key: 'lastOnlineTime',
-      width: 180,
-      ellipsis: { showTitle: true },
-      render: (text) => {
-        if (text && text.startsWith('[1] ')) {
-          return text.substring(4);
-        }
-        return text || '-';
-      },
-    },
-    {
-      title: 'Label',
-      dataIndex: 'label',
-      key: 'label',
-      width: 100,
       ellipsis: { showTitle: true },
     },
     {
