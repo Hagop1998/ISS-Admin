@@ -335,6 +335,12 @@ const DoorOpeningRecord = () => {
           setSelectedUserId(null);
         }}
         userId={selectedUserId}
+        onUserDeleted={() => {
+          dispatch(fetchUserHistory({
+            page: pagination.page,
+            limit: pagination.limit,
+          }));
+        }}
       />
     </div>
   );

@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Descriptions, Tag, Table, Spin, message, Divider, Space } from 'antd';
-import { userService } from '../../services/userService';
+import { Modal, Descriptions, Tag, Table, Spin, message, Divider, Space, Button, Popconfirm } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
+import { deleteUser } from '../../store/slices/userSlice';
 
-const UserDetailsModal = ({ open, onCancel, userId }) => {
+const UserDetailsModal = ({ open, onCancel, userId, onUserDeleted }) => {
+  const dispatch = useDispatch();
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (open && userId) {
@@ -47,6 +51,24 @@ const UserDetailsModal = ({ open, onCancel, userId }) => {
       onCancel();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!userId) return;
+
+    setDeleting(true);
+    try {
+      await dispatch(deleteUser(userId)).unwrap();
+      message.success('User deleted successfully');
+      onCancel();
+      if (onUserDeleted) {
+        onUserDeleted();
+      }
+    } catch (error) {
+      message.error(error || 'Failed to delete user');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -97,7 +119,29 @@ const UserDetailsModal = ({ open, onCancel, userId }) => {
       title="User Details"
       open={open}
       onCancel={onCancel}
-      footer={null}
+      footer={[
+        <Button key="cancel" onClick={onCancel}>
+          Close
+        </Button>,
+        <Popconfirm
+          key="delete"
+          title="Delete this user?"
+          description="Are you sure you want to delete this user? This action cannot be undone."
+          onConfirm={handleDelete}
+          okText="Yes"
+          cancelText="No"
+          okType="danger"
+        >
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            loading={deleting}
+          >
+            Delete User
+          </Button>
+        </Popconfirm>,
+      ]}
       width={900}
       destroyOnClose
     >
