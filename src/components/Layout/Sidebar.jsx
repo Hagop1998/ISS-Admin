@@ -113,7 +113,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div>
             <button
               className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
-                isActive('/access-control/list') || isActive('/access-control/door-opening-record') || isActive('/access-control/users-face-list')
+                isActive('/access-control/list')
                   ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
                   : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
               }`}
@@ -145,6 +145,33 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Records & Reports */}
+          <div>
+            <button
+              className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                isActive('/access-control/door-opening-record') || isActive('/access-control/users-face-list')
+                  ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                  : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+              }`}
+              onClick={() => handleMenuClick('records-reports')}
+            >
+              <span>Records & Reports</span>
+              <svg
+                className={`w-4 h-4 transition-transform ${isExpanded('records-reports') ? 'rotate-90' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            
+            {isExpanded('records-reports') && (
+              <div className="ml-4 mt-1 space-y-1">
                 <button
                   className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm border transition ${
                     isActive('/access-control/door-opening-record')
