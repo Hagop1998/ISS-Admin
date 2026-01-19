@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Typography, Breadcrumb, message, Card, Tag } from 'antd';
@@ -6,6 +6,7 @@ import { HomeOutlined } from '@ant-design/icons';
 import { fetchUserHistory, setPage, setLimit } from '../store/slices/userHistorySlice';
 import { fetchAddresses } from '../store/slices/addressSlice';
 import { UnlockTypeEnum, getUnlockTypeName } from '../constants/enums';
+import UserDetailsModal from '../components/Users/UserDetailsModal';
 
 const { Title } = Typography;
 
@@ -15,6 +16,8 @@ const DoorOpeningRecord = () => {
   const { history, loading, error, pagination } = useSelector((state) => state.userHistory);
   const { items: addresses, loading: addressesLoading } = useSelector((state) => state.addresses);
   const token = useSelector((state) => state.auth.token);
+  const [isUserDetailsModalOpen, setIsUserDetailsModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   // Create a map of addressId to address for quick lookup
   const addressLookupMap = useMemo(() => {
@@ -100,12 +103,27 @@ const DoorOpeningRecord = () => {
       width: 150,
       ellipsis: true,
       render: (text, record) => {
-        if (text) return text;
-        if (record.user) {
+        const userId = record.user?.id || record.user?._id || record.userId;
+        let userName = text;
+        if (!userName && record.user) {
           const user = record.user;
-          return `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || '-';
+          userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || '-';
         }
-        return '-';
+        
+        if (userId && userName && userName !== '-') {
+          return (
+            <span
+              style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => {
+                setSelectedUserId(userId);
+                setIsUserDetailsModalOpen(true);
+              }}
+            >
+              {userName}
+            </span>
+          );
+        }
+        return userName || '-';
       },
     },
     {
@@ -308,6 +326,16 @@ const DoorOpeningRecord = () => {
           }}
         />
       </Card>
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        open={isUserDetailsModalOpen}
+        onCancel={() => {
+          setIsUserDetailsModalOpen(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId}
+      />
     </div>
   );
 };
