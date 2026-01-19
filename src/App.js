@@ -9,7 +9,6 @@ import UsersList from './pages/UsersList';
 import AddressesList from './pages/AddressesList';
 import CommunityOverview from './pages/CommunityOverview';
 import Login from './pages/Login';
-import DevicesList from './pages/DevicesList';
 import DeviceConfig from './pages/DeviceConfig';
 import CardSettings from './pages/CardSettings';
 import PersonalData from './pages/PersonalData';
@@ -75,7 +74,6 @@ function App() {
               <Route path="/access-control/users-face-list" element={<UsersFaceList />} />
               <Route path="/community/overview" element={<CommunityOverview />} />
               <Route path="/addresses" element={<AddressesList />} />
-              <Route path="/device-manager/devices" element={<DevicesList />} />
               <Route path="/device-manager/card-settings" element={<CardSettings />} />
               <Route path="/device-manager/device-config" element={<DeviceConfig />} />
               <Route path="/users" element={<UsersList />} />

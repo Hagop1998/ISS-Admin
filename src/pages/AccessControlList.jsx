@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card, Modal } from 'antd';
-import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined } from '@ant-design/icons';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
-import { restartDevice, createDevice, updateDevice } from '../store/slices/deviceSlice';
+import { restartDevice, createDevice, updateDevice, unlockDevice } from '../store/slices/deviceSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
 import AddAccessControlModal from '../components/AccessControl/AddAccessControlModal';
 import DeviceUsersModal from '../components/Devices/DeviceUsersModal';
@@ -69,9 +69,25 @@ const AccessControlList = () => {
   const handleCustomSettings = (record) => {
     const deviceId = record.id || record._id;
     if (deviceId) {
-      navigate(`/access-control/configure/${deviceId}`);
+      navigate(`/access-control/custom-settings/${deviceId}`);
     } else {
       message.error('Device ID is missing');
+    }
+  };
+
+  const handleUnlockDoor = async (record) => {
+    const localId = record.localId || record.serialNumber;
+    if (!localId) {
+      message.error('Device local ID is missing');
+      return;
+    }
+
+    try {
+      message.loading({ content: 'Opening door...', key: 'unlock' });
+      await dispatch(unlockDevice(localId)).unwrap();
+      message.success({ content: 'Door opened successfully', key: 'unlock' });
+    } catch (error) {
+      message.error({ content: error.message || 'Failed to open door', key: 'unlock' });
     }
   };
 
@@ -230,6 +246,12 @@ const AccessControlList = () => {
             label: 'View Users',
             icon: <UserOutlined />,
             onClick: () => handleViewUsers(record),
+          },
+          {
+            key: 'doorOpen',
+            label: 'Door Open',
+            icon: <UnlockOutlined />,
+            onClick: () => handleUnlockDoor(record),
           },
           {
             key: 'customSettings',
