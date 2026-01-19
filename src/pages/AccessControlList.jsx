@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card, Modal } from 'antd';
-import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, PlusOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined } from '@ant-design/icons';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
-import { restartDevice, createDevice, updateDevice, unlockDevice } from '../store/slices/deviceSlice';
+import { restartDevice, updateDevice, unlockDevice } from '../store/slices/deviceSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
 import AddAccessControlModal from '../components/AccessControl/AddAccessControlModal';
 import DeviceUsersModal from '../components/Devices/DeviceUsersModal';
@@ -17,7 +17,6 @@ const AccessControlList = () => {
   const { items, selectedItems, pagination, filters, devicesLoading, devicesError } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingDevice, setEditingDevice] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
@@ -244,7 +243,7 @@ const AccessControlList = () => {
           },
           {
             key: 'edit',
-            label: 'Edit',
+            label: 'Assign to Address',
             icon: <EditOutlined />,
             onClick: () => handleEdit(record),
           },
@@ -337,16 +336,6 @@ const AccessControlList = () => {
         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
           Access Control List
         </Title>
-        <Space size="middle">
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            size="middle"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            Add Access Control
-          </Button>
-        </Space>
       </div>
 
       <div style={{ marginBottom: 16 }}>
@@ -392,38 +381,6 @@ const AccessControlList = () => {
       </Card>
 
       <AddAccessControlModal
-        open={isAddModalOpen}
-        onCancel={() => setIsAddModalOpen(false)}
-        mode="add"
-        onSubmit={async (values) => {
-          try {
-            const managerId = user?.id || 1; 
-
-            const deviceData = {
-              managerId: Number(managerId), 
-              addressId: Number(values.community), 
-              localId: String(values.serialNumber || ''), 
-              sector: String(values.sector || 'Sector1'), 
-              sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), 
-              deviceType: String(values.deviceType || 'door'), 
-            };
-
-            message.loading({ content: 'Creating device...', key: 'create' });
-            await dispatch(createDevice(deviceData)).unwrap();
-            message.success({ content: 'Access control device created successfully', key: 'create' });
-            setIsAddModalOpen(false);
-            
-            dispatch(fetchDevices({
-              page: pagination.currentPage,
-              limit: pagination.itemsPerPage,
-            }));
-          } catch (error) {
-            message.error({ content: error.message || 'Failed to create access control device', key: 'create' });
-          }
-        }}
-      />
-
-      <AddAccessControlModal
         open={isEditModalOpen}
         onCancel={() => {
           setIsEditModalOpen(false);
@@ -443,9 +400,9 @@ const AccessControlList = () => {
               deviceType: String(values.deviceType || 'door'), 
             };
 
-            message.loading({ content: 'Updating device...', key: 'update' });
+            message.loading({ content: 'Assigning device to address...', key: 'update' });
             await dispatch(updateDevice({ id: editingDevice.id, deviceData })).unwrap();
-            message.success({ content: 'Access control device updated successfully', key: 'update' });
+            message.success({ content: 'Device assigned to address successfully', key: 'update' });
             setIsEditModalOpen(false);
             setEditingDevice(null);
             

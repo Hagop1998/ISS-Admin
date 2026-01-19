@@ -79,7 +79,7 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
 
   return (
     <Modal
-      title={mode === 'edit' ? 'Edit Access Control' : 'Add Access Control'}
+      title={mode === 'edit' ? 'Assign Device to Address' : 'Add Access Control'}
       open={open}
       onCancel={handleCancel}
       footer={null}
