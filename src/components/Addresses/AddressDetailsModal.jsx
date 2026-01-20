@@ -9,13 +9,13 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers }) => {
   const long = parseFloat(address.long);
   const hasValidCoordinates = !isNaN(lat) && !isNaN(long);
 
-  const googleMapsUrl = hasValidCoordinates
-    ? `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.1841338848877!2d${long}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z${lat}%2C${long}!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus`
+  const yandexMapsUrl = hasValidCoordinates
+    ? `https://yandex.com/map-widget/v1/?ll=${long},${lat}&z=15`
     : null;
 
-  const openInGoogleMaps = () => {
+  const openInYandexMaps = () => {
     if (hasValidCoordinates) {
-      window.open(`https://www.google.com/maps?q=${lat},${long}`, '_blank');
+      window.open(`https://yandex.com/maps/?pt=${long},${lat}&z=15`, '_blank');
     }
   };
 
@@ -58,10 +58,10 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers }) => {
                 <Button
                   type="link"
                   icon={<EnvironmentOutlined />}
-                  onClick={openInGoogleMaps}
+                  onClick={openInYandexMaps}
                   size="small"
                 >
-                  Open in Google Maps
+                  Open in Yandex Maps
                 </Button>
               </Space>
             ) : (
@@ -75,10 +75,10 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers }) => {
                 <Button
                   type="link"
                   icon={<EnvironmentOutlined />}
-                  onClick={openInGoogleMaps}
+                  onClick={openInYandexMaps}
                   size="small"
                 >
-                  Open in Google Maps
+                  Open in Yandex Maps
                 </Button>
               </Space>
             ) : (
@@ -107,7 +107,7 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers }) => {
                   height="100%"
                   frameBorder="0"
                   style={{ border: 0 }}
-                  src={`https://www.google.com/maps?q=${lat},${long}&z=15&output=embed`}
+                  src={yandexMapsUrl}
                   allowFullScreen
                   title="Address Location"
                 />
@@ -116,9 +116,9 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers }) => {
                 <Button
                   type="primary"
                   icon={<EnvironmentOutlined />}
-                  onClick={openInGoogleMaps}
+                  onClick={openInYandexMaps}
                 >
-                  Open in Google Maps
+                  Open in Yandex Maps
                 </Button>
               </div>
             </div>

@@ -180,14 +180,13 @@ const AccessControlList = () => {
       ellipsis: { showTitle: true },
     },
     {
-      title: 'Installation Position/Label',
-      key: 'installationPositionLabel',
+      title: 'Device Type',
+      key: 'deviceType',
       width: 180,
       ellipsis: { showTitle: true },
       render: (_, record) => {
-        const installationPosition = record.installationPosition || '-';
-        const label = record.label || '-';
-        return `${installationPosition}/${label}`;
+        const deviceType = record.deviceType || '-';
+        return deviceType;
       },
     },
     {
@@ -422,16 +421,18 @@ const AccessControlList = () => {
         }}
         mode="edit"
         deviceId={editingDevice?.id}
+        deviceData={editingDevice}
         onSubmit={async (values) => {
           try {
             const managerId = user?.id || 1; 
             const deviceData = {
               managerId: Number(managerId), 
               addressId: Number(values.community), 
-              localId: String(values.serialNumber || ''), 
+              localId: String(values.localId || ''), 
               sector: String(values.sector || 'Sector1'), 
               sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), 
               deviceType: String(values.deviceType || 'door'), 
+              settings: values.settings ? JSON.parse(values.settings) : {},
             };
 
             message.loading({ content: 'Assigning device to address...', key: 'update' });

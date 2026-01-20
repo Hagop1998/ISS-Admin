@@ -130,9 +130,9 @@ const AddressesList = () => {
     }
   };
 
-  const openInGoogleMaps = (lat, long) => {
+  const openInYandexMaps = (lat, long) => {
     if (lat && long) {
-      const url = `https://www.google.com/maps?q=${lat},${long}`;
+      const url = `https://yandex.com/maps/?pt=${long},${lat}&z=15`;
       window.open(url, '_blank');
     }
   };
@@ -178,16 +178,16 @@ const AddressesList = () => {
         const formatted = formatCoordinates(lat);
         return (
           <a
-            href={`https://www.google.com/maps?q=${lat},${record?.long || lat}`}
+            href={`https://yandex.com/maps/?pt=${record?.long || lat},${lat}&z=15`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 hover:text-blue-700 flex items-center"
             onClick={(e) => {
               e.preventDefault();
               if (record?.lat && record?.long) {
-                openInGoogleMaps(record.lat, record.long);
+                openInYandexMaps(record.lat, record.long);
               } else if (lat) {
-                openInGoogleMaps(lat, lat);
+                openInYandexMaps(lat, lat);
               }
             }}
           >
@@ -206,16 +206,16 @@ const AddressesList = () => {
         const formatted = formatCoordinates(long);
         return (
           <a
-            href={`https://www.google.com/maps?q=${record?.lat || long},${long}`}
+            href={`https://yandex.com/maps/?pt=${long},${record?.lat || long}&z=15`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 hover:text-blue-700 flex items-center"
             onClick={(e) => {
               e.preventDefault();
               if (record?.lat && record?.long) {
-                openInGoogleMaps(record.lat, record.long);
+                openInYandexMaps(record.lat, record.long);
               } else if (long) {
-                openInGoogleMaps(long, long);
+                openInYandexMaps(long, long);
               }
             }}
           >

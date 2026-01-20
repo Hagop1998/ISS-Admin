@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Modal, Form, Input, Select, Checkbox, Button, Space, message } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Modal, Form, Select, Button, Space, Input, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAddresses } from '../../store/slices/accessControlSlice';
 import { getDeviceById } from '../../store/slices/deviceSlice';
@@ -7,7 +7,7 @@ import { getDeviceById } from '../../store/slices/deviceSlice';
 const { Option } = Select;
 const { TextArea } = Input;
 
-const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode = 'add' }) => {
+const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode = 'add', deviceData = null }) => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { addresses, addressesLoading } = useSelector((state) => state.accessControl);
@@ -21,51 +21,67 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
     }
     if (!open) {
       hasFetchedRef.current = false;
+      form.resetFields();
     }
-  }, [open, dispatch]);
+  }, [open, dispatch, form]);
 
   useEffect(() => {
-    if (open) {
-      if (mode === 'edit' && deviceId) {
-        // Fetch device data for editing
-        setLoading(true);
-        dispatch(getDeviceById(deviceId))
-          .unwrap()
-          .then((device) => {
-            // Map API response to form fields
-            form.setFieldsValue({
-              community: device.addressId,
-              deviceName: device.deviceName || device.localId,
-              serialNumber: device.localId,
-              digitalIntercomTerminal: device.digitalIntercomTerminal || false,
-              accessControlAddress: device.accessControlAddress,
-              permissionValues: device.permissionValues || device.sectorPassword,
-              deviceType: device.deviceType,
-              sector: device.sector,
-              sectorPassword: device.sectorPassword,
-              description: device.description,
-              ladderControlCoding: device.ladderControlCoding,
-              ladderControlStartingFloors: device.ladderControlStartingFloors,
-              supportDoorWay: device.supportDoorWay || [],
-            });
-            setLoading(false);
-          })
-          .catch((error) => {
-            message.error(error.message || 'Failed to load device data');
-            setLoading(false);
-            onCancel();
+    if (open && mode === 'edit' && deviceId && !deviceData) {
+      // Fetch device data if not provided
+      setLoading(true);
+      dispatch(getDeviceById(deviceId))
+        .unwrap()
+        .then((result) => {
+          const device = result?.data || result?.device || result;
+          form.setFieldsValue({
+            community: device.addressId,
+            localId: device.localId || device.serialNumber || '',
+            sector: device.sector || 'Sector1',
+            sectorPassword: device.sectorPassword || 'ABCDEF123456',
+            deviceType: device.deviceType || 'door',
+            settings: device.settings ? JSON.stringify(device.settings, null, 2) : '{}',
           });
-      } else {
-        form.resetFields();
-        setLoading(false);
-      }
+          setLoading(false);
+        })
+        .catch((error) => {
+          message.error(error.message || 'Failed to load device data');
+          setLoading(false);
+        });
+    } else if (open && deviceData) {
+      // Use provided device data
+      form.setFieldsValue({
+        community: deviceData.addressId,
+        localId: deviceData.localId || deviceData.serialNumber || '',
+        sector: deviceData.sector || 'Sector1',
+        sectorPassword: deviceData.sectorPassword || 'ABCDEF123456',
+        deviceType: deviceData.deviceType || 'door',
+        settings: deviceData.settings ? JSON.stringify(deviceData.settings, null, 2) : '{}',
+      });
+    } else if (open && mode === 'add') {
+      form.resetFields();
     }
-  }, [open, deviceId, mode, form, onCancel]);
+  }, [open, deviceId, mode, deviceData, form, dispatch]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      onSubmit(values);
+      // Parse settings if it's a string
+      let settings = {};
+      if (values.settings) {
+        try {
+          settings = typeof values.settings === 'string' ? JSON.parse(values.settings) : values.settings;
+        } catch (e) {
+          message.error('Invalid JSON format for settings');
+          return;
+        }
+      }
+      
+      const formData = {
+        ...values,
+        settings,
+      };
+      
+      onSubmit(formData);
       form.resetFields();
     } catch (error) {
       console.error('Validation failed:', error);
@@ -79,11 +95,11 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
 
   return (
     <Modal
-      title={mode === 'edit' ? 'Assign Device to Address' : 'Add Access Control'}
+      title="Assign Device to Address"
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={800}
+      width={600}
       destroyOnHidden
       confirmLoading={loading}
     >
@@ -115,86 +131,13 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
           </Select>
         </Form.Item>
 
-        {/* Device Name */}
+        {/* Local ID */}
         <Form.Item
-          name="deviceName"
-          label="Device Name"
-          rules={[
-            { required: true, message: 'Please enter device name' },
-            { max: 16, message: 'Most Input 16 Words' },
-          ]}
-          help="Most Input 16 Words"
+          name="localId"
+          label="Local ID"
+          rules={[{ required: true, message: 'Please enter local ID' }]}
         >
-          <Input placeholder="Enter device name" />
-        </Form.Item>
-
-        {/* Serial Number */}
-        <Form.Item
-          name="serialNumber"
-          label="Serial Number"
-          rules={[
-            { required: true, message: 'Please enter serial number' },
-            { len: 16, message: 'Please enter the 16 equipment serial number' },
-          ]}
-          help="Please enter the 16 equipment serial number"
-        >
-          <div>
-            <Form.Item name="digitalIntercomTerminal" valuePropName="checked" noStyle>
-              <Checkbox style={{ marginBottom: 8 }}>Digital Intercom Terminal</Checkbox>
-            </Form.Item>
-            <Input
-              placeholder="Enter 16-digit serial number"
-              maxLength={16}
-            />
-          </div>
-        </Form.Item>
-
-        {/* Access Control Address */}
-        <Form.Item
-          name="accessControlAddress"
-          label="Access Control Address"
-          help="13 Device Address"
-        >
-          <Input placeholder="Enter access control address" maxLength={13} />
-        </Form.Item>
-
-        {/* Permission Values */}
-        <Form.Item
-          name="permissionValues"
-          label="Permission Values"
-          rules={[
-            { required: true, message: 'Please enter permission values' },
-            {
-              type: 'number',
-              min: 1,
-              max: 320,
-              message: 'Permission Values Range 1-320',
-              transform: (value) => Number(value),
-            },
-          ]}
-          help="Permission Values Range 1-320"
-        >
-          <Input
-            type="number"
-            placeholder="Enter permission values (1-320)"
-            min={1}
-            max={320}
-            style={{ width: '100%' }}
-          />
-        </Form.Item>
-
-        {/* Device Type */}
-        <Form.Item
-          name="deviceType"
-          label="Device Type"
-          rules={[{ required: true, message: 'Please select device type' }]}
-          initialValue="door"
-        >
-          <Select placeholder="Select device type">
-            <Option value="door">Door</Option>
-            <Option value="gate">Gate</Option>
-            <Option value="building">Building</Option>
-          </Select>
+          <Input placeholder="Enter local ID (e.g., door001)" disabled />
         </Form.Item>
 
         {/* Sector */}
@@ -202,7 +145,6 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
           name="sector"
           label="Sector"
           rules={[{ required: true, message: 'Please enter sector' }]}
-          initialValue="Sector1"
         >
           <Input placeholder="Enter sector (e.g., Sector1)" />
         </Form.Item>
@@ -216,51 +158,29 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
           <Input.Password placeholder="Enter sector password" />
         </Form.Item>
 
-        {/* Entrance Guard Machine Description */}
+        {/* Device Type */}
         <Form.Item
-          name="description"
-          label="Entrance Guard Machine Description"
-          help="Most Input 50 Words"
+          name="deviceType"
+          label="Device Type"
+          rules={[{ required: true, message: 'Please select device type' }]}
+        >
+          <Select placeholder="Select device type">
+            <Option value="door">Door</Option>
+            <Option value="gate">Gate</Option>
+            <Option value="building">Building</Option>
+          </Select>
+        </Form.Item>
+
+        {/* Settings */}
+        <Form.Item
+          name="settings"
+          label="Settings"
+          help="Enter settings as JSON object"
         >
           <TextArea
             rows={4}
-            placeholder="Enter description"
-            maxLength={50}
-            showCount
+            placeholder='{"additionalProp1": "value"}'
           />
-        </Form.Item>
-
-        {/* Ladder Control Coding */}
-        <Form.Item
-          name="ladderControlCoding"
-          label="Ladder Control Coding"
-          help="Multiple Use [,] Space"
-        >
-          <Input placeholder="Enter ladder control coding (use comma or space)" />
-        </Form.Item>
-
-        {/* Ladder Control Starting Floors */}
-        <Form.Item
-          name="ladderControlStartingFloors"
-          label="Ladder Control Starting Floors"
-        >
-          <Input placeholder="Enter starting floors" />
-        </Form.Item>
-
-        {/* Support the Door Way */}
-        <Form.Item
-          name="supportDoorWay"
-          label="Support the Door Way"
-          rules={[{ required: true, message: 'Please select at least one option' }]}
-        >
-          <Checkbox.Group>
-            <Space direction="vertical">
-              <Checkbox value="remote">Remote</Checkbox>
-              <Checkbox value="authorizationCode">Authorization Code</Checkbox>
-              <Checkbox value="bluetooth">Bluetooth</Checkbox>
-              <Checkbox value="faceScan">Face Scan</Checkbox>
-            </Space>
-          </Checkbox.Group>
         </Form.Item>
 
         {/* Form Actions */}
@@ -269,7 +189,7 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
             <Button onClick={handleCancel}>
               Cancel
             </Button>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" htmlType="submit" loading={loading}>
               Submit
             </Button>
           </Space>

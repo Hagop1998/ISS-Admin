@@ -305,7 +305,7 @@ export const deviceService = {
   },
 
   async setICCard(data) {
-    const url = `${API_BASE_PATH}/admin/middleware/set_IC_card`;
+    const url = `${API_BASE_PATH}/admin/middleware/set_live_card`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -540,6 +540,106 @@ export const deviceService = {
       return await response.json();
     } catch (error) {
       return { success: true, message: 'Door configuration updated successfully' };
+    }
+  },
+
+  async getChips(params = {}) {
+    const { page = 1, limit = 10 } = params;
+    
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    const url = `${API_BASE_PATH}/chips?${queryParams}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      let errorMessage = 'Failed to fetch chips';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+
+  async createChip(data) {
+    const url = `${API_BASE_PATH}/chips`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      let errorMessage = 'Failed to create chip';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+      return { success: true, message: 'Chip created successfully' };
+    }
+
+    try {
+      return await response.json();
+    } catch (error) {
+      return { success: true, message: 'Chip created successfully' };
+    }
+  },
+
+  async updateChip(chipId, chipData) {
+    const url = `${API_BASE_PATH}/chips/${chipId}`;
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify(chipData),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      let errorMessage = 'Failed to update chip';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+      return { success: true, message: 'Chip updated successfully' };
+    }
+
+    try {
+      return await response.json();
+    } catch (error) {
+      return { success: true, message: 'Chip updated successfully' };
     }
   },
 };

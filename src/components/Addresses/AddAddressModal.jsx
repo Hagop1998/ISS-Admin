@@ -28,6 +28,8 @@ const AddAddressModal = ({ open, onCancel, onSubmit, mode = 'add', initialValues
         form.setFieldsValue({
           address: initialValues.address || '',
           city: initialValues.city || '',
+          lat: initialValues.lat || '',
+          long: initialValues.long || '',
           managerId: initialValues.managerId || null,
         });
       }, 0);
@@ -103,6 +105,44 @@ const AddAddressModal = ({ open, onCancel, onSubmit, mode = 'add', initialValues
           ]}
         >
           <Input placeholder="Enter city name" />
+        </Form.Item>
+
+        {/* Latitude */}
+        <Form.Item
+          name="lat"
+          label="Latitude"
+          rules={[
+            { 
+              pattern: /^-?([1-8]?[0-9](\.\d+)?|90(\.0+)?)$/, 
+              message: 'Please enter a valid latitude (-90 to 90)' 
+            },
+          ]}
+          help="Enter latitude coordinate (e.g., 40.7128)"
+        >
+          <Input 
+            placeholder="Enter latitude" 
+            type="number"
+            step="any"
+          />
+        </Form.Item>
+
+        {/* Longitude */}
+        <Form.Item
+          name="long"
+          label="Longitude"
+          rules={[
+            { 
+              pattern: /^-?((1[0-7][0-9]|[0-9]?[0-9])(\.\d+)?|180(\.0+)?)$/, 
+              message: 'Please enter a valid longitude (-180 to 180)' 
+            },
+          ]}
+          help="Enter longitude coordinate (e.g., -74.0060)"
+        >
+          <Input 
+            placeholder="Enter longitude" 
+            type="number"
+            step="any"
+          />
         </Form.Item>
 
         {/* Manager Selection - Only for super admin */}

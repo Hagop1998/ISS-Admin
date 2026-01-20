@@ -242,8 +242,62 @@ export const setDoor = createAsyncThunk(
   }
 );
 
+export const fetchChips = createAsyncThunk(
+  'devices/fetchChips',
+  async (params = {}, { rejectWithValue, dispatch }) => {
+    try {
+      const data = await deviceService.getChips(params);
+      return data;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to fetch chips');
+    }
+  }
+);
+
+export const createChip = createAsyncThunk(
+  'devices/createChip',
+  async (chipData, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.createChip(chipData);
+      return result;
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to create chip');
+    }
+  }
+);
+
+export const updateChip = createAsyncThunk(
+  'devices/updateChip',
+  async ({ chipId, chipData }, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deviceService.updateChip(chipId, chipData);
+      return { chipId, result };
+    } catch (error) {
+      if (error.message && error.message.includes('Unauthorized')) {
+        dispatch(logout());
+      }
+      return rejectWithValue(error.message || 'Failed to update chip');
+    }
+  }
+);
+
 const initialState = {
   items: [],
+  chips: [],
+  chipsLoading: false,
+  chipsError: null,
+  chipsPagination: {
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
+  },
   loading: false,
   error: null,
   pagination: {
@@ -473,6 +527,76 @@ const deviceSlice = createSlice({
       .addCase(setDoor.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to set door configuration';
+      })
+      // Fetch chips
+      .addCase(fetchChips.pending, (state) => {
+        state.chipsLoading = true;
+        state.chipsError = null;
+      })
+      .addCase(fetchChips.fulfilled, (state, action) => {
+        state.chipsLoading = false;
+        const payload = action.payload;
+
+        // Handle different API response formats
+        if (Array.isArray(payload)) {
+          state.chips = payload;
+          state.chipsPagination.totalItems = payload.length;
+        } else if (payload?.results && Array.isArray(payload.results)) {
+          state.chips = payload.results;
+          if (payload.pages) {
+            state.chipsPagination = {
+              currentPage: payload.pages.current || state.chipsPagination.currentPage,
+              itemsPerPage: parseInt(payload.pages.perPage) || state.chipsPagination.itemsPerPage,
+              totalItems: payload.totalCount || 0,
+              totalPages: payload.pages.numPages || 1,
+            };
+          } else if (payload.totalCount !== undefined) {
+            state.chipsPagination.totalItems = payload.totalCount;
+            if (payload.pages) {
+              state.chipsPagination.currentPage = payload.pages.current || 1;
+              state.chipsPagination.itemsPerPage = parseInt(payload.pages.perPage) || 10;
+              state.chipsPagination.totalPages = payload.pages.numPages || 1;
+            }
+          }
+        } else if (payload?.data && Array.isArray(payload.data)) {
+          state.chips = payload.data;
+          state.chipsPagination.totalItems = payload.data.length;
+        } else {
+          state.chips = [];
+        }
+      })
+      .addCase(fetchChips.rejected, (state, action) => {
+        state.chipsLoading = false;
+        state.chipsError = action.payload || 'Failed to fetch chips';
+      })
+      // Create chip
+      .addCase(createChip.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createChip.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(createChip.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to create chip';
+      })
+      // Update chip
+      .addCase(updateChip.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateChip.fulfilled, (state, action) => {
+        state.loading = false;
+        const { chipId } = action.payload;
+        const index = state.chips.findIndex(chip => chip.id === chipId || chip._id === chipId);
+        if (index !== -1 && action.payload.result) {
+          state.chips[index] = { ...state.chips[index], ...action.payload.result };
+        }
+      })
+      .addCase(updateChip.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to update chip';
       });
   },
 });
