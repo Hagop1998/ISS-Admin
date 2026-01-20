@@ -101,31 +101,31 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
       >
         {currentStep === 1 && (
           <>
-            <Form.Item
-              label={`Select address for ${user?.firstName || ''} ${user?.lastName || ''}`}
-              name="addressId"
-              rules={[{ required: true, message: 'Please select an address' }]}
-            >
-              <Select
-                placeholder="Select an address"
-                loading={loading}
-                showSearch
-                filterOption={(input, option) =>
-                  String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                notFoundContent={loading ? <Spin size="small" /> : 'No addresses found'}
-              >
-                {addresses.map((address) => (
-                  <Option key={address.id || address._id} value={address.id || address._id}>
-                    {address.address || address.name || `Address ${address.id || address._id}`}
-                    {address.city && ` - ${address.city}`}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+        <Form.Item
+          label={`Select address for ${user?.firstName || ''} ${user?.lastName || ''}`}
+          name="addressId"
+          rules={[{ required: true, message: 'Please select an address' }]}
+        >
+          <Select
+            placeholder="Select an address"
+            loading={loading}
+            showSearch
+            filterOption={(input, option) =>
+              String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            notFoundContent={loading ? <Spin size="small" /> : 'No addresses found'}
+          >
+            {addresses.map((address) => (
+              <Option key={address.id || address._id} value={address.id || address._id}>
+                {address.address || address.name || `Address ${address.id || address._id}`}
+                {address.city && ` - ${address.city}`}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
 
-            <Form.Item>
-              <Space>
+        <Form.Item>
+          <Space>
                 <Button type="primary" onClick={handleAddressNext}>
                   Next
                 </Button>
@@ -174,16 +174,16 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
                   loading={loadingSubscription}
                   disabled={isNextDisabled}
                 >
-                  Confirm & Verify User
-                </Button>
+              Confirm & Verify User
+            </Button>
                 <Button onClick={handleBack} disabled={loadingSubscription}>
                   Back
                 </Button>
-                <Button onClick={handleCancel} disabled={loadingSubscription}>
-                  Cancel
-                </Button>
-              </Space>
-            </Form.Item>
+            <Button onClick={handleCancel} disabled={loadingSubscription}>
+              Cancel
+            </Button>
+          </Space>
+        </Form.Item>
           </>
         )}
       </Form>

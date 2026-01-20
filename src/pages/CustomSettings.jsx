@@ -30,7 +30,7 @@ import {
   ClockCircleOutlined,
   SaveOutlined
 } from '@ant-design/icons';
-import { setDoor, getDeviceById } from '../store/slices/deviceSlice';
+import { setDoor, updateDevice, getDeviceById } from '../store/slices/deviceSlice';
 import { fetchDevices, fetchAddresses } from '../store/slices/accessControlSlice';
 import { SetDoorTypeEnum } from '../constants/enums';
 
@@ -100,17 +100,22 @@ const CustomSettings = () => {
     });
     setDevices(filtered);
     
-    // Fetch details for all devices at this address
     filtered.forEach((dev) => {
       const devId = dev.id || dev._id;
       if (devId && !deviceSettings[devId]) {
         fetchDeviceDetails(devId).then((deviceData) => {
           if (deviceData) {
+            const settings = deviceData.settings || {};
+            const normalizedSettings = {};
+            Object.keys(settings).forEach(key => {
+              normalizedSettings[String(key)] = settings[key];
+            });
+            
             setDeviceSettings(prev => ({
               ...prev,
               [devId]: {
                 ...deviceData,
-                settings: {}
+                settings: normalizedSettings
               }
             }));
           }
@@ -123,7 +128,44 @@ const CustomSettings = () => {
     setSelectedAddressId(value);
     setDevices([]);
     setDeviceSettings({});
-    setTempValues({}); // Clear temporary values when address changes
+    setTempValues({}); 
+  };
+
+  // Check if enum type is a switch type (returns boolean)
+  const isSwitchType = (enumType) => {
+    return enumType === SetDoorTypeEnum.LIVENESS_SWITCH ||
+           enumType === SetDoorTypeEnum.CLOUD_INTERCOM_SWITCH ||
+           enumType === SetDoorTypeEnum.QR_CODE_SWITCH ||
+           enumType === SetDoorTypeEnum.AUTOMATIC_FACE_SWITCH ||
+           enumType === SetDoorTypeEnum.CARD_SWIPE_FAILURE_VERIFICATION ||
+           enumType === SetDoorTypeEnum.DIRECT_CALL_MOBILE ||
+           enumType === SetDoorTypeEnum.UPLOAD_UNLOCK_RECORD_IMAGE;
+  };
+
+  // Default values for each enum type
+  const getDefaultValue = (enumType) => {
+    if (isSwitchType(enumType)) {
+      return false; // boolean false
+    } else if (enumType === SetDoorTypeEnum.LIVENESS_THRESHOLD ||
+               enumType === SetDoorTypeEnum.FACE_RECOGNITION_THRESHOLD) {
+      return 90;
+    } else if (enumType === SetDoorTypeEnum.ADVERTISING_SLEEP_START) {
+      return 0;
+    } else if (enumType === SetDoorTypeEnum.ADVERTISING_SLEEP_END) {
+      return 600;
+    }
+    return 0;
+  };
+
+  // Convert value to proper type based on enum type
+  const convertValueToProperType = (enumType, value) => {
+    if (isSwitchType(enumType)) {
+      // Convert 0/1 to boolean, or keep boolean if already boolean
+      if (typeof value === 'boolean') return value;
+      return value === 1 || value === true;
+    }
+    // For numeric types, ensure it's a number
+    return typeof value === 'number' ? value : Number(value) || 0;
   };
 
   const handleSave = async (deviceId, type, value) => {
@@ -139,22 +181,96 @@ const CustomSettings = () => {
       return;
     }
 
+    // Get the actual device ID (numeric ID, not localId)
+    const actualDeviceId = device.id || device._id;
+    if (!actualDeviceId) {
+      message.error('Device ID is missing');
+      return;
+    }
+
     try {
       message.loading({ content: 'Saving configuration...', key: `save-${deviceId}-${type}` });
+      
+      // Get current settings from deviceSettings state
+      const stateSettings = deviceSettings[deviceId]?.settings || {};
+      
+      // Also get original settings from device data (in case state is incomplete)
+      const originalDevice = deviceSettings[deviceId] || device;
+      const originalSettings = originalDevice.settings || {};
+      
+      // Merge both sources to get all existing settings
+      const allExistingSettings = {};
+      
+      // First, add all settings from original device data
+      Object.keys(originalSettings).forEach(key => {
+        allExistingSettings[String(key)] = originalSettings[key];
+      });
+      
+      // Then, add all settings from state (these might be more up-to-date)
+      Object.keys(stateSettings).forEach(key => {
+        allExistingSettings[String(key)] = stateSettings[key];
+      });
+      
+      // Build complete settings object with ALL enum values
+      // Get all enum values from SetDoorTypeEnum
+      const allEnumValues = Object.values(SetDoorTypeEnum);
+      const completeSettings = {};
+      
+      // For each enum value, use existing value if available, otherwise use default
+      allEnumValues.forEach(enumValue => {
+        const enumKey = String(enumValue);
+        if (allExistingSettings[enumKey] !== undefined) {
+          // Convert existing value to proper type (boolean for switches, number for others)
+          completeSettings[enumKey] = convertValueToProperType(enumValue, allExistingSettings[enumKey]);
+        } else {
+          // Use default value
+          completeSettings[enumKey] = getDefaultValue(enumValue);
+        }
+      });
+      
+      // Now update the specific key being changed (convert to proper type)
+      completeSettings[String(type)] = convertValueToProperType(type, value);
+      
+      // Debug: Log the settings object being sent
+      console.log('Sending complete settings object:', completeSettings);
+      console.log('All enum values:', allEnumValues);
+      console.log('Type being updated:', type, 'Value:', value);
+      console.log('Device ID:', actualDeviceId);
+      console.log('Local ID:', localId);
+      
+      // Step 1: First send to set_door middleware endpoint with individual type/value
+      // Note: set_door expects { localId, type, value } format
+      // For set_door, switch types should be 0/1 (numbers), not boolean
+      let setDoorValue = value;
+      if (isSwitchType(type)) {
+        // Convert boolean to 0/1 for set_door endpoint
+        setDoorValue = value === true || value === 1 ? 1 : 0;
+      } else {
+        // For numeric types, ensure it's a number
+        setDoorValue = typeof value === 'number' ? value : Number(value) || 0;
+      }
+      
       await dispatch(setDoor({
         localId,
         type,
-        value,
+        value: setDoorValue,
       })).unwrap();
       
+      // Step 2: If set_door succeeds, then send PATCH to device/{id} with complete settings
+      await dispatch(updateDevice({
+        id: actualDeviceId,
+        deviceData: {
+          settings: completeSettings
+        }
+      })).unwrap();
+      
+      // Update local state with the complete settings
       setDeviceSettings(prev => ({
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          settings: {
-            ...(prev[deviceId]?.settings || {}),
-            [type]: value
-          }
+          ...originalDevice,
+          settings: completeSettings
         }
       }));
       message.success({ content: 'Configuration saved successfully', key: `save-${deviceId}-${type}` });
@@ -164,7 +280,8 @@ const CustomSettings = () => {
   };
 
   const handleSwitchChange = (deviceId, type, value) => {
-    handleSave(deviceId, type, value ? 1 : 0);
+    // Pass boolean value directly
+    handleSave(deviceId, type, value);
   };
 
   const handleThresholdChange = (deviceId, type, value) => {
@@ -213,8 +330,12 @@ const CustomSettings = () => {
 
   const renderSwitchCard = (deviceId, title, icon, label, type, defaultValue = false) => {
     const deviceSetting = deviceSettings[deviceId];
-    const currentValue = deviceSetting?.settings?.[type] !== undefined 
-      ? deviceSetting.settings[type] 
+    // Use string key to access settings (enum values are stored as string keys)
+    const typeKey = String(type);
+    const rawValue = deviceSetting?.settings?.[typeKey];
+    // Convert boolean/0/1 to 0/1 for UI display
+    const currentValue = rawValue !== undefined 
+      ? (rawValue === true || rawValue === 1 ? 1 : 0)
       : (defaultValue ? 1 : 0);
     
     return (
@@ -253,7 +374,9 @@ const CustomSettings = () => {
     const deviceSetting = deviceSettings[deviceId];
     const tempKey = `${deviceId}-${type}`;
     const tempValue = tempValues[tempKey];
-    const savedValue = deviceSetting?.settings?.[type];
+    // Use string key to access settings (enum values are stored as string keys)
+    const typeKey = String(type);
+    const savedValue = deviceSetting?.settings?.[typeKey];
     const baseValue = savedValue !== undefined ? savedValue : defaultValue;
     const currentValue = tempValue !== undefined ? tempValue : baseValue;
     const hasChanges = tempValue !== undefined && tempValue !== baseValue;
@@ -301,7 +424,9 @@ const CustomSettings = () => {
     const deviceSetting = deviceSettings[deviceId];
     const tempKey = `${deviceId}-${type}`;
     const tempValue = tempValues[tempKey];
-    const savedValue = deviceSetting?.settings?.[type];
+    // Use string key to access settings (enum values are stored as string keys)
+    const typeKey = String(type);
+    const savedValue = deviceSetting?.settings?.[typeKey];
     const baseValue = savedValue !== undefined ? savedValue : defaultValue;
     const currentValue = tempValue !== undefined ? tempValue : baseValue;
     const hasChanges = tempValue !== undefined && tempValue !== baseValue;
