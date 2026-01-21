@@ -49,13 +49,30 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
         });
     } else if (open && deviceData) {
       // Use provided device data
+      let settingsValue = '{}';
+      if (deviceData.settings) {
+        if (typeof deviceData.settings === 'string') {
+          // If it's already a string, try to parse and re-stringify to validate
+          try {
+            const parsed = JSON.parse(deviceData.settings);
+            settingsValue = JSON.stringify(parsed, null, 2);
+          } catch (e) {
+            // If parsing fails, use empty object
+            settingsValue = '{}';
+          }
+        } else if (typeof deviceData.settings === 'object') {
+          // If it's an object, stringify it
+          settingsValue = JSON.stringify(deviceData.settings, null, 2);
+        }
+      }
+      
       form.setFieldsValue({
-        community: deviceData.addressId,
+        community: deviceData.addressId || deviceData.address?.id || deviceData.address?._id,
         localId: deviceData.localId || deviceData.serialNumber || '',
         sector: deviceData.sector || 'Sector1',
         sectorPassword: deviceData.sectorPassword || 'ABCDEF123456',
         deviceType: deviceData.deviceType || 'door',
-        settings: deviceData.settings ? JSON.stringify(deviceData.settings, null, 2) : '{}',
+        settings: settingsValue,
       });
     } else if (open && mode === 'add') {
       form.resetFields();
@@ -65,14 +82,22 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      // Parse settings if it's a string
+      // Parse settings if it's a string, otherwise use empty object
       let settings = {};
       if (values.settings) {
-        try {
-          settings = typeof values.settings === 'string' ? JSON.parse(values.settings) : values.settings;
-        } catch (e) {
-          message.error('Invalid JSON format for settings');
-          return;
+        if (typeof values.settings === 'string') {
+          // Remove any whitespace
+          const trimmed = values.settings.trim();
+          if (trimmed) {
+            try {
+              settings = JSON.parse(trimmed);
+            } catch (e) {
+              message.error('Invalid JSON format for settings. Please enter valid JSON.');
+              return;
+            }
+          }
+        } else if (typeof values.settings === 'object' && values.settings !== null) {
+          settings = values.settings;
         }
       }
       
@@ -85,6 +110,11 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
       form.resetFields();
     } catch (error) {
       console.error('Validation failed:', error);
+      if (error.errorFields) {
+        // Form validation errors are handled by Ant Design
+        return;
+      }
+      message.error('Please check the form and try again');
     }
   };
 
@@ -176,6 +206,21 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
           name="settings"
           label="Settings"
           help="Enter settings as JSON object"
+          rules={[
+            {
+              validator: (_, value) => {
+                if (!value || value.trim() === '') {
+                  return Promise.resolve();
+                }
+                try {
+                  JSON.parse(value);
+                  return Promise.resolve();
+                } catch (e) {
+                  return Promise.reject(new Error('Please enter valid JSON format'));
+                }
+              },
+            },
+          ]}
         >
           <TextArea
             rows={4}

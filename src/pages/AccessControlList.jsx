@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card, Modal } from 'antd';
-import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined, EyeOutlined } from '@ant-design/icons';
-import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchDevices } from '../store/slices/accessControlSlice';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined, EyeOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchAddresses } from '../store/slices/accessControlSlice';
 import { restartDevice, updateDevice, unlockDevice } from '../store/slices/deviceSlice';
+import { updateAddress } from '../store/slices/addressSlice';
 import FilterBar from '../components/AccessControl/FilterBar';
 import AddAccessControlModal from '../components/AccessControl/AddAccessControlModal';
 import DeviceUsersModal from '../components/Devices/DeviceUsersModal';
@@ -15,7 +16,7 @@ const { Title } = Typography;
 const AccessControlList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items, selectedItems, pagination, filters, devicesLoading, devicesError } = useSelector((state) => state.accessControl);
+  const { items, selectedItems, pagination, filters, addressesLoading, addressesError } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
   const [editingDevice, setEditingDevice] = useState(null);
@@ -24,11 +25,27 @@ const AccessControlList = () => {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
+  const lastFetchedRef = React.useRef({ page: null, limit: null });
 
   useEffect(() => {
-    dispatch(fetchDevices({
-      page: pagination.currentPage,
-      limit: pagination.itemsPerPage,
+    const currentPage = pagination.currentPage;
+    const currentLimit = pagination.itemsPerPage;
+    
+    // Prevent duplicate calls from React.StrictMode double render
+    if (
+      lastFetchedRef.current.page === currentPage &&
+      lastFetchedRef.current.limit === currentLimit
+    ) {
+      return;
+    }
+    
+    lastFetchedRef.current = { page: currentPage, limit: currentLimit };
+    
+    // Fetch addresses with pagination (devices are included in address response)
+    // Only fetch with limit=10 as requested
+    dispatch(fetchAddresses({
+      page: currentPage,
+      limit: currentLimit,
     }));
   }, [dispatch, pagination.currentPage, pagination.itemsPerPage]);
 
@@ -39,10 +56,10 @@ const AccessControlList = () => {
   }, [token, navigate]);
 
   useEffect(() => {
-    if (devicesError) {
-      message.error(devicesError);
+    if (addressesError) {
+      message.error(addressesError);
     }
-  }, [devicesError]);
+  }, [addressesError]);
 
   const handleTableChange = (newPagination) => {
     if (newPagination.current !== pagination.currentPage) {
@@ -101,6 +118,40 @@ const AccessControlList = () => {
     } catch (error) {
       message.error({ content: error.message || 'Failed to open door', key: 'unlock' });
     }
+  };
+
+  const handleUnassignAddress = async (record) => {
+    const addressId = record.addressId || record.address?.id || record.address?._id;
+    if (!addressId) {
+      message.error('Address ID is missing');
+      return;
+    }
+
+    Modal.confirm({
+      title: 'Unassign Address?',
+      content: 'Are you sure you want to unassign this address?.',
+      okText: 'Yes',
+      cancelText: 'No',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          message.loading({ content: 'Unassigning address...', key: 'unassign' });
+          await dispatch(updateAddress({ 
+            id: addressId, 
+            addressData: { managerId: null } 
+          })).unwrap();
+          message.success({ content: 'Address unassigned successfully', key: 'unassign' });
+          
+          // Refresh the list
+          dispatch(fetchAddresses({
+            page: pagination.currentPage,
+            limit: pagination.itemsPerPage,
+          }));
+        } catch (error) {
+          message.error({ content: error.message || 'Failed to unassign address', key: 'unassign' });
+        }
+      },
+    });
   };
 
   const remoteMenuItems = [
@@ -209,11 +260,11 @@ const AccessControlList = () => {
       key: 'state',
       width: 100,
       align: 'center',
-      render: (state) => {
-        const isOnline = state === 'Online';
+      render: (_, record) => {
+        const isOnline = record.isOnline === true || record.device?.isOnline === true;
         return (
           <Tag color={isOnline ? 'success' : 'error'} style={{ margin: 0 }}>
-            {state || 'Offline'}
+            {isOnline ? 'Online' : 'Offline'}
           </Tag>
         );
       },
@@ -264,6 +315,12 @@ const AccessControlList = () => {
             label: 'Assign to Address',
             icon: <EditOutlined />,
             onClick: () => handleEdit(record),
+          },
+          {
+            key: 'unassign',
+            label: 'Unassign Address',
+            icon: <DisconnectOutlined />,
+            onClick: () => handleUnassignAddress(record),
           },
         ];
 
@@ -376,7 +433,7 @@ const AccessControlList = () => {
           dataSource={items}
           rowKey="id"
           rowSelection={rowSelection}
-          loading={devicesLoading}
+          loading={addressesLoading}
           bordered={false}
           pagination={{
             current: pagination.currentPage,
@@ -424,7 +481,23 @@ const AccessControlList = () => {
         deviceData={editingDevice}
         onSubmit={async (values) => {
           try {
-            const managerId = user?.id || 1; 
+            const managerId = user?.id || 1;
+            
+            // Handle settings - it should already be parsed by the modal, but ensure it's an object
+            let settings = {};
+            if (values.settings) {
+              if (typeof values.settings === 'string') {
+                try {
+                  settings = JSON.parse(values.settings);
+                } catch (e) {
+                  message.error('Invalid JSON format for settings');
+                  return;
+                }
+              } else if (typeof values.settings === 'object') {
+                settings = values.settings;
+              }
+            }
+            
             const deviceData = {
               managerId: Number(managerId), 
               addressId: Number(values.community), 
@@ -432,16 +505,26 @@ const AccessControlList = () => {
               sector: String(values.sector || 'Sector1'), 
               sectorPassword: String(values.sectorPassword || 'ABCDEF123456'), 
               deviceType: String(values.deviceType || 'door'), 
-              settings: values.settings ? JSON.parse(values.settings) : {},
+              settings: settings,
             };
 
             message.loading({ content: 'Assigning device to address...', key: 'update' });
+            
+            // Update the device
             await dispatch(updateDevice({ id: editingDevice.id, deviceData })).unwrap();
+            
+            // Also update the address's managerId
+            const addressId = Number(values.community);
+            await dispatch(updateAddress({ 
+              id: addressId, 
+              addressData: { managerId: Number(managerId) } 
+            })).unwrap();
+            
             message.success({ content: 'Device assigned to address successfully', key: 'update' });
             setIsEditModalOpen(false);
             setEditingDevice(null);
             
-            dispatch(fetchDevices({
+            dispatch(fetchAddresses({
               page: pagination.currentPage,
               limit: pagination.itemsPerPage,
             }));

@@ -14,8 +14,19 @@ const getHeaders = () => {
 };
 
 export const addressService = {
-  async getAddresses() {
-    const url = `${API_BASE_PATH}/address`;
+  async getAddresses(params = {}) {
+    const { page = 1, limit = 10, search = '' } = params;
+    
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    if (search) {
+      queryParams.append('search', search);
+    }
+
+    const url = `${API_BASE_PATH}/address?${queryParams}`;
 
     const response = await fetch(url, {
       method: 'GET',

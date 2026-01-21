@@ -14,7 +14,9 @@ import {
   Row,
   Col,
   InputNumber,
-  Select
+  Select,
+  Table,
+  Tag
 } from 'antd';
 import { 
   HomeOutlined, 
@@ -28,7 +30,9 @@ import {
   CameraOutlined,
   SlidersOutlined,
   ClockCircleOutlined,
-  SaveOutlined
+  SaveOutlined,
+  SettingOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { setDoor, updateDevice, getDeviceById } from '../store/slices/deviceSlice';
 import { fetchDevices, fetchAddresses } from '../store/slices/accessControlSlice';
@@ -46,8 +50,11 @@ const CustomSettings = () => {
   const { items: accessControlDevices, addresses, addressesLoading } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
   const [devices, setDevices] = useState([]);
+  const [filteredDevices, setFilteredDevices] = useState([]);
   const [deviceSettings, setDeviceSettings] = useState({});
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [tempValues, setTempValues] = useState({}); // Store temporary values before saving
 
   useEffect(() => {
@@ -68,6 +75,7 @@ const CustomSettings = () => {
           if (deviceData?.addressId) {
             setSelectedAddressId(deviceData.addressId);
             updateDevicesForAddress(deviceData.addressId);
+            setSelectedDeviceId(deviceId);
           }
         });
       }
@@ -75,12 +83,49 @@ const CustomSettings = () => {
   }, [deviceId, token, dispatch]);
 
   useEffect(() => {
+    // Show all devices by default, or filter by address if selected
     if (selectedAddressId) {
       updateDevicesForAddress(selectedAddressId);
     } else {
-      setDevices([]);
+      // Show all devices when no address is selected
+      const allDevices = accessControlDevices || [];
+      setDevices(allDevices);
+      // Initialize filtered devices
+      if (!searchTerm.trim()) {
+        setFilteredDevices(allDevices);
+      }
     }
   }, [selectedAddressId, accessControlDevices]);
+
+  // Filter devices based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredDevices(devices);
+    } else {
+      const searchLower = searchTerm.toLowerCase();
+      const filtered = devices.filter((device) => {
+        const localId = (device.localId || device.serialNumber || '').toLowerCase();
+        const position = (device.installationPosition || device.deviceType || '').toLowerCase();
+        const label = (device.accessControlName || device.label || '').toLowerCase();
+        const address = device.address;
+        let addressName = '';
+        if (typeof address === 'object' && address) {
+          addressName = (address.address || address.name || '').toLowerCase();
+        } else if (device.addressId) {
+          const foundAddress = addresses.find(a => (a.id || a._id) == device.addressId);
+          if (foundAddress) {
+            addressName = (foundAddress.address || foundAddress.name || '').toLowerCase();
+          }
+        }
+        
+        return localId.includes(searchLower) ||
+               position.includes(searchLower) ||
+               label.includes(searchLower) ||
+               addressName.includes(searchLower);
+      });
+      setFilteredDevices(filtered);
+    }
+  }, [searchTerm, devices, addresses]);
 
   const fetchDeviceDetails = async (id) => {
     try {
@@ -99,6 +144,7 @@ const CustomSettings = () => {
       return devAddressId == addressId;
     });
     setDevices(filtered);
+    // Filtered devices will be updated by the search effect
     
     filtered.forEach((dev) => {
       const devId = dev.id || dev._id;
@@ -125,10 +171,38 @@ const CustomSettings = () => {
   };
 
   const handleAddressChange = (value) => {
-    setSelectedAddressId(value);
-    setDevices([]);
-    setDeviceSettings({});
+    setSelectedAddressId(value || null);
+    setSelectedDeviceId(null); // Reset selected device when address changes
     setTempValues({}); 
+    // Devices will be updated by useEffect
+  };
+
+  const handleDeviceSelect = (deviceId) => {
+    setSelectedDeviceId(deviceId);
+    // Fetch device details if not already loaded
+    if (!deviceSettings[deviceId]) {
+      fetchDeviceDetails(deviceId).then((deviceData) => {
+        if (deviceData) {
+          const settings = deviceData.settings || {};
+          const normalizedSettings = {};
+          Object.keys(settings).forEach(key => {
+            normalizedSettings[String(key)] = settings[key];
+          });
+          
+          setDeviceSettings(prev => ({
+            ...prev,
+            [deviceId]: {
+              ...deviceData,
+              settings: normalizedSettings
+            }
+          }));
+        }
+      });
+    }
+  };
+
+  const handleBackToTable = () => {
+    setSelectedDeviceId(null);
   };
 
   // Check if enum type is a switch type (returns boolean)
@@ -211,42 +285,31 @@ const CustomSettings = () => {
         allExistingSettings[String(key)] = stateSettings[key];
       });
       
-      // Build complete settings object with ALL enum values
-      // Get all enum values from SetDoorTypeEnum
+  
       const allEnumValues = Object.values(SetDoorTypeEnum);
       const completeSettings = {};
       
-      // For each enum value, use existing value if available, otherwise use default
       allEnumValues.forEach(enumValue => {
         const enumKey = String(enumValue);
         if (allExistingSettings[enumKey] !== undefined) {
-          // Convert existing value to proper type (boolean for switches, number for others)
           completeSettings[enumKey] = convertValueToProperType(enumValue, allExistingSettings[enumKey]);
         } else {
-          // Use default value
           completeSettings[enumKey] = getDefaultValue(enumValue);
         }
       });
       
-      // Now update the specific key being changed (convert to proper type)
       completeSettings[String(type)] = convertValueToProperType(type, value);
       
-      // Debug: Log the settings object being sent
       console.log('Sending complete settings object:', completeSettings);
       console.log('All enum values:', allEnumValues);
       console.log('Type being updated:', type, 'Value:', value);
       console.log('Device ID:', actualDeviceId);
       console.log('Local ID:', localId);
-      
-      // Step 1: First send to set_door middleware endpoint with individual type/value
-      // Note: set_door expects { localId, type, value } format
-      // For set_door, switch types should be 0/1 (numbers), not boolean
+  
       let setDoorValue = value;
       if (isSwitchType(type)) {
-        // Convert boolean to 0/1 for set_door endpoint
         setDoorValue = value === true || value === 1 ? 1 : 0;
       } else {
-        // For numeric types, ensure it's a number
         setDoorValue = typeof value === 'number' ? value : Number(value) || 0;
       }
       
@@ -256,7 +319,6 @@ const CustomSettings = () => {
         value: setDoorValue,
       })).unwrap();
       
-      // Step 2: If set_door succeeds, then send PATCH to device/{id} with complete settings
       await dispatch(updateDevice({
         id: actualDeviceId,
         deviceData: {
@@ -264,7 +326,6 @@ const CustomSettings = () => {
         }
       })).unwrap();
       
-      // Update local state with the complete settings
       setDeviceSettings(prev => ({
         ...prev,
         [deviceId]: {
@@ -280,7 +341,6 @@ const CustomSettings = () => {
   };
 
   const handleSwitchChange = (deviceId, type, value) => {
-    // Pass boolean value directly
     handleSave(deviceId, type, value);
   };
 
@@ -501,52 +561,215 @@ const CustomSettings = () => {
         </Button>
       </div>
 
-      {/* Address Selection Card */}
-      {!deviceId && (
+      {/* Address Selection Card - Always visible */}
+      <Card 
+        style={{ marginBottom: 24 }}
+        styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
+        title="Select Address"
+      >
+        <Form.Item label="Select Address" style={{ marginBottom: 0 }}>
+          <Select
+            placeholder="Select an address to filter devices (or leave empty to see all)"
+            size="large"
+            value={selectedAddressId}
+            onChange={handleAddressChange}
+            style={{ width: '100%' }}
+            loading={addressesLoading}
+            showSearch
+            allowClear
+            filterOption={(input, option) => {
+              const label = option?.label || option?.children || '';
+              const labelStr = typeof label === 'string' ? label : String(label);
+              return labelStr.toLowerCase().includes(input.toLowerCase());
+            }}
+            optionLabelProp="label"
+          >
+            {addresses.map((address) => {
+              const addressLabel = address.address || address.name || `Address ${address.id || address._id}`;
+              return (
+                <Option key={address.id || address._id} value={address.id || address._id} label={addressLabel}>
+                  {addressLabel}
+                  {address.city && ` - ${address.city}`}
+                </Option>
+              );
+            })}
+          </Select>
+        </Form.Item>
+      </Card>
+
+      {/* Devices Table - Show only when no address is selected and no device is selected */}
+      {!selectedAddressId && !selectedDeviceId && (
         <Card 
           style={{ marginBottom: 24 }}
           styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-          title="Select Address"
+          title="All Devices"
         >
-          <Form.Item label="Select Address" style={{ marginBottom: 0 }}>
-            <Select
-              placeholder="Select an address to configure devices"
+          {/* Search Input */}
+          <div style={{ marginBottom: 16 }}>
+            <Input
+              placeholder="Search devices by Local ID, Position, Label, or Address..."
+              prefix={<SearchOutlined />}
               size="large"
-              value={selectedAddressId}
-              onChange={handleAddressChange}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              allowClear
               style={{ width: '100%' }}
-              loading={addressesLoading}
-              showSearch
-              filterOption={(input, option) => {
-                const label = option?.label || option?.children || '';
-                const labelStr = typeof label === 'string' ? label : String(label);
-                return labelStr.toLowerCase().includes(input.toLowerCase());
-              }}
-              optionLabelProp="label"
-            >
-              {addresses.map((address) => {
-                const addressLabel = address.address || address.name || `Address ${address.id || address._id}`;
-                return (
-                  <Option key={address.id || address._id} value={address.id || address._id} label={addressLabel}>
-                    {addressLabel}
-                    {address.city && ` - ${address.city}`}
-                  </Option>
-                );
+            />
+          </div>
+          
+          {filteredDevices.length > 0 ? (
+            <Table
+              dataSource={filteredDevices}
+              rowKey={(record) => record.id || record._id}
+              pagination={false}
+              onRow={(record) => ({
+                onClick: () => handleDeviceSelect(record.id || record._id),
+                style: { cursor: 'pointer' }
               })}
-            </Select>
-          </Form.Item>
+              columns={[
+                {
+                  title: 'Local ID',
+                  dataIndex: 'localId',
+                  key: 'localId',
+                  render: (text, record) => text || record.serialNumber || '-',
+                },
+                {
+                  title: 'Installation Position / Label',
+                  key: 'position',
+                  render: (_, record) => {
+                    const position = record.installationPosition || record.deviceType || '-';
+                    const label = record.accessControlName || record.label || '';
+                    return position && label ? `${position} / ${label}` : position || label || '-';
+                  },
+                },
+                {
+                  title: 'Address',
+                  key: 'address',
+                  render: (_, record) => {
+                    const address = record.address || record.addressId;
+                    if (typeof address === 'object' && address) {
+                      return address.address || address.name || `Address ${address.id || address._id}`;
+                    }
+                    // If address is just an ID, try to find it in addresses list
+                    const addressId = record.addressId || address;
+                    if (addressId) {
+                      const foundAddress = addresses.find(a => (a.id || a._id) == addressId);
+                      if (foundAddress) {
+                        return foundAddress.address || foundAddress.name || `Address ${addressId}`;
+                      }
+                    }
+                    return '-';
+                  },
+                },
+                {
+                  title: 'Status',
+                  key: 'status',
+                  render: (_, record) => {
+                    const isOnline = record.isOnline;
+                    const isEnabled = record.isEnabled;
+                    return (
+                      <Space>
+                        <Tag color={isOnline ? 'green' : 'red'}>
+                          {isOnline ? 'Online' : 'Offline'}
+                        </Tag>
+                        <Tag color={isEnabled ? 'blue' : 'default'}>
+                          {isEnabled ? 'Enabled' : 'Disabled'}
+                        </Tag>
+                      </Space>
+                    );
+                  },
+                },
+                {
+                  title: 'Action',
+                  key: 'action',
+                  render: (_, record) => (
+                    <Button
+                      type="primary"
+                      icon={<SettingOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeviceSelect(record.id || record._id);
+                      }}
+                      style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
+                    >
+                      Configure
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+              {searchTerm 
+                ? `No devices found matching "${searchTerm}"`
+                : 'No devices found'}
+            </div>
+          )}
         </Card>
       )}
 
-      {/* Devices Configuration for Selected Address */}
-      {selectedAddressId && devices.length > 0 && devices.map((dev) => {
-        const devId = dev.id || dev._id;
-        const deviceData = deviceSettings[devId] || dev;
-        const deviceName = deviceData.name || deviceData.accessControlName || deviceData.localId || deviceData.serialNumber || `Device ${devId}`;
+      {/* Show message when address is selected but no devices */}
+      {selectedAddressId && !selectedDeviceId && devices.length === 0 && (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+            No devices found for the selected address
+          </div>
+        </Card>
+      )}
+
+      {/* Device Configuration - Show when address is selected OR when a device is selected */}
+      {(selectedAddressId || selectedDeviceId) && (() => {
+        // If address is selected, show all devices for that address
+        // If specific device is selected, show only that device
+        const devicesToShow = selectedDeviceId 
+          ? [devices.find(d => (d.id || d._id) == selectedDeviceId) || deviceSettings[selectedDeviceId]].filter(Boolean)
+          : devices;
         
-        return (
-          <div key={devId} style={{ marginBottom: 32 }}>
-            {/* Device Information Card */}
+        if (devicesToShow.length === 0) {
+          return <div>Loading device details...</div>;
+        }
+        
+        return devicesToShow.map((dev) => {
+          const devId = dev.id || dev._id;
+          if (!devId) return null;
+          
+          const deviceData = deviceSettings[devId] || dev;
+          const deviceName = deviceData.name || deviceData.accessControlName || deviceData.localId || deviceData.serialNumber || `Device ${devId}`;
+          
+          // Fetch device details if not already loaded
+          if (!deviceSettings[devId]) {
+            fetchDeviceDetails(devId).then((deviceData) => {
+              if (deviceData) {
+                const settings = deviceData.settings || {};
+                const normalizedSettings = {};
+                Object.keys(settings).forEach(key => {
+                  normalizedSettings[String(key)] = settings[key];
+                });
+                
+                setDeviceSettings(prev => ({
+                  ...prev,
+                  [devId]: {
+                    ...deviceData,
+                    settings: normalizedSettings
+                  }
+                }));
+              }
+            });
+          }
+          
+          return (
+            <div key={devId} style={{ marginBottom: 32 }}>
+              {/* Back Button - Only show when specific device is selected from table */}
+              {selectedDeviceId && !selectedAddressId && (
+                <Button
+                  icon={<ArrowLeftOutlined />}
+                  onClick={handleBackToTable}
+                  style={{ marginBottom: 16 }}
+                >
+                  Back to Device List
+                </Button>
+              )}
+              {/* Device Information Card */}
             <Card 
               style={{ marginBottom: 24 }}
               styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
@@ -691,24 +914,10 @@ const CustomSettings = () => {
               </Row>
             </div>
           </div>
-        );
-      })}
+          );
+        });
+      })()}
 
-      {selectedAddressId && devices.length === 0 && (
-        <Card>
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-            No devices found for the selected address
-          </div>
-        </Card>
-      )}
-
-      {!selectedAddressId && !deviceId && (
-        <Card>
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-            Please select an address to configure devices
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
