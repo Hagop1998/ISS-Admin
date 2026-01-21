@@ -23,9 +23,14 @@ const AddressesList = () => {
   const [editingAddress, setEditingAddress] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [detailsAddress, setDetailsAddress] = useState(null);
+  const hasFetchedRef = React.useRef(false);
 
-  // Fetch addresses on mount
+  // Fetch addresses on mount (prevent duplicate calls from React.StrictMode)
   useEffect(() => {
+    if (hasFetchedRef.current) {
+      return;
+    }
+    hasFetchedRef.current = true;
     dispatch(fetchAddresses());
   }, [dispatch]);
 

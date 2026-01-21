@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -35,7 +35,7 @@ import {
   SearchOutlined
 } from '@ant-design/icons';
 import { setDoor, updateDevice, getDeviceById } from '../store/slices/deviceSlice';
-import { fetchDevices, fetchAddresses } from '../store/slices/accessControlSlice';
+import { fetchDevices } from '../store/slices/accessControlSlice';
 import { SetDoorTypeEnum } from '../constants/enums';
 
 const { Title } = Typography;
@@ -47,7 +47,7 @@ const CustomSettings = () => {
   const { deviceId } = useParams();
   const [form] = Form.useForm();
   const { loading } = useSelector((state) => state.devices);
-  const { items: accessControlDevices, addresses, addressesLoading } = useSelector((state) => state.accessControl);
+  const { items: accessControlDevices } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
   const [devices, setDevices] = useState([]);
   const [filteredDevices, setFilteredDevices] = useState([]);
@@ -56,6 +56,98 @@ const CustomSettings = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [tempValues, setTempValues] = useState({}); // Store temporary values before saving
+  const hasFetchedRef = React.useRef(false);
+  const fetchingDeviceRef = React.useRef(new Set()); // Track which devices are currently being fetched
+
+  // Extract unique addresses from devices (devices already have address info)
+  const addresses = React.useMemo(() => {
+    const addressMap = new Map();
+    accessControlDevices.forEach((device) => {
+      const address = device.address;
+      if (address && typeof address === 'object') {
+        const addressId = address.id || address._id || device.addressId;
+        if (addressId && !addressMap.has(addressId)) {
+          addressMap.set(addressId, {
+            id: addressId,
+            _id: addressId,
+            address: address.address || address.name || '',
+            name: address.name || address.address || '',
+            city: address.city || '',
+          });
+        }
+      } else if (device.addressId) {
+        // If address is not an object but we have addressId, create a minimal address entry
+        if (!addressMap.has(device.addressId)) {
+          addressMap.set(device.addressId, {
+            id: device.addressId,
+            _id: device.addressId,
+            address: `Address ${device.addressId}`,
+            name: `Address ${device.addressId}`,
+          });
+        }
+      }
+    });
+    return Array.from(addressMap.values());
+  }, [accessControlDevices]);
+
+  // Define functions before useEffects that use them
+  const fetchDeviceDetails = useCallback(async (id) => {
+    if (!id) return null;
+    
+    // Prevent duplicate calls for the same device
+    if (fetchingDeviceRef.current.has(id)) {
+      return null;
+    }
+    
+    // Check if device data is already loaded
+    if (deviceSettings[id]) {
+      return deviceSettings[id];
+    }
+    
+    // Mark as fetching
+    fetchingDeviceRef.current.add(id);
+    
+    try {
+      const result = await dispatch(getDeviceById(id)).unwrap();
+      const deviceData = result?.data || result?.device || result;
+      
+      if (deviceData) {
+        const settings = deviceData.settings || {};
+        const normalizedSettings = {};
+        Object.keys(settings).forEach(key => {
+          normalizedSettings[String(key)] = settings[key];
+        });
+        
+        setDeviceSettings(prev => ({
+          ...prev,
+          [id]: {
+            ...deviceData,
+            settings: normalizedSettings
+          }
+        }));
+      }
+      
+      return deviceData;
+    } catch (error) {
+      message.error(error || 'Failed to fetch device details');
+      return null;
+    } finally {
+      // Remove from fetching set
+      fetchingDeviceRef.current.delete(id);
+    }
+  }, [dispatch, deviceSettings]);
+
+  const updateDevicesForAddress = useCallback((addressId) => {
+    const filtered = accessControlDevices.filter((dev) => {
+      const devAddressId = dev.addressId || dev.address?.id || dev.address?._id;
+      return devAddressId == addressId;
+    });
+    setDevices(filtered);
+    // Filtered devices will be updated by the search effect
+    
+    // Don't fetch device details here - only fetch when device is actually selected
+    // This prevents multiple unnecessary API calls
+  }, [accessControlDevices]);
 
   useEffect(() => {
     if (!token) {
@@ -64,23 +156,30 @@ const CustomSettings = () => {
   }, [token, navigate]);
 
   useEffect(() => {
-    if (token) {
-      // Fetch addresses and devices
-      dispatch(fetchAddresses());
-      dispatch(fetchDevices({ page: 1, limit: 100 }));
-      
-      // If deviceId in URL, fetch device details and set address
-      if (deviceId) {
-        fetchDeviceDetails(deviceId).then((deviceData) => {
-          if (deviceData?.addressId) {
-            setSelectedAddressId(deviceData.addressId);
-            updateDevicesForAddress(deviceData.addressId);
-            setSelectedDeviceId(deviceId);
-          }
-        });
-      }
+    if (!token) {
+      return;
     }
-  }, [deviceId, token, dispatch]);
+
+    // Prevent duplicate calls from React.StrictMode double render
+    if (hasFetchedRef.current) {
+      return;
+    }
+    hasFetchedRef.current = true;
+
+    // Fetch devices (addresses are already included in device response)
+    dispatch(fetchDevices({ page: 1, limit: 10 }));
+    
+    // If deviceId in URL, fetch device details and set address
+    if (deviceId) {
+      fetchDeviceDetails(deviceId).then((deviceData) => {
+        if (deviceData?.addressId) {
+          setSelectedAddressId(deviceData.addressId);
+          // updateDevicesForAddress will be called by the useEffect that watches selectedAddressId
+          setSelectedDeviceId(deviceId);
+        }
+      });
+    }
+  }, [deviceId, token, dispatch, fetchDeviceDetails]);
 
   useEffect(() => {
     // Show all devices by default, or filter by address if selected
@@ -95,7 +194,7 @@ const CustomSettings = () => {
         setFilteredDevices(allDevices);
       }
     }
-  }, [selectedAddressId, accessControlDevices]);
+  }, [selectedAddressId, accessControlDevices, updateDevicesForAddress, searchTerm]);
 
   // Filter devices based on search term
   useEffect(() => {
@@ -112,6 +211,7 @@ const CustomSettings = () => {
         if (typeof address === 'object' && address) {
           addressName = (address.address || address.name || '').toLowerCase();
         } else if (device.addressId) {
+          // Find address from extracted addresses list
           const foundAddress = addresses.find(a => (a.id || a._id) == device.addressId);
           if (foundAddress) {
             addressName = (foundAddress.address || foundAddress.name || '').toLowerCase();
@@ -127,48 +227,12 @@ const CustomSettings = () => {
     }
   }, [searchTerm, devices, addresses]);
 
-  const fetchDeviceDetails = async (id) => {
-    try {
-      const result = await dispatch(getDeviceById(id)).unwrap();
-      const deviceData = result?.data || result?.device || result;
-      return deviceData;
-    } catch (error) {
-      message.error(error || 'Failed to fetch device details');
-      return null;
+  // Fetch device details when a device is selected
+  useEffect(() => {
+    if (selectedDeviceId && !deviceSettings[selectedDeviceId]) {
+      fetchDeviceDetails(selectedDeviceId);
     }
-  };
-
-  const updateDevicesForAddress = (addressId) => {
-    const filtered = accessControlDevices.filter((dev) => {
-      const devAddressId = dev.addressId || dev.address?.id || dev.address?._id;
-      return devAddressId == addressId;
-    });
-    setDevices(filtered);
-    // Filtered devices will be updated by the search effect
-    
-    filtered.forEach((dev) => {
-      const devId = dev.id || dev._id;
-      if (devId && !deviceSettings[devId]) {
-        fetchDeviceDetails(devId).then((deviceData) => {
-          if (deviceData) {
-            const settings = deviceData.settings || {};
-            const normalizedSettings = {};
-            Object.keys(settings).forEach(key => {
-              normalizedSettings[String(key)] = settings[key];
-            });
-            
-            setDeviceSettings(prev => ({
-              ...prev,
-              [devId]: {
-                ...deviceData,
-                settings: normalizedSettings
-              }
-            }));
-          }
-        });
-      }
-    });
-  };
+  }, [selectedDeviceId, deviceSettings, fetchDeviceDetails]);
 
   const handleAddressChange = (value) => {
     setSelectedAddressId(value || null);
@@ -177,29 +241,14 @@ const CustomSettings = () => {
     // Devices will be updated by useEffect
   };
 
-  const handleDeviceSelect = (deviceId) => {
+  const handleDeviceSelect = useCallback((deviceId) => {
+    if (!deviceId) return;
+    
     setSelectedDeviceId(deviceId);
     // Fetch device details if not already loaded
-    if (!deviceSettings[deviceId]) {
-      fetchDeviceDetails(deviceId).then((deviceData) => {
-        if (deviceData) {
-          const settings = deviceData.settings || {};
-          const normalizedSettings = {};
-          Object.keys(settings).forEach(key => {
-            normalizedSettings[String(key)] = settings[key];
-          });
-          
-          setDeviceSettings(prev => ({
-            ...prev,
-            [deviceId]: {
-              ...deviceData,
-              settings: normalizedSettings
-            }
-          }));
-        }
-      });
-    }
-  };
+    // fetchDeviceDetails already handles checking if data exists and preventing duplicates
+    fetchDeviceDetails(deviceId);
+  }, [fetchDeviceDetails]);
 
   const handleBackToTable = () => {
     setSelectedDeviceId(null);
@@ -574,7 +623,6 @@ const CustomSettings = () => {
             value={selectedAddressId}
             onChange={handleAddressChange}
             style={{ width: '100%' }}
-            loading={addressesLoading}
             showSearch
             allowClear
             filterOption={(input, option) => {
@@ -605,18 +653,7 @@ const CustomSettings = () => {
           title="All Devices"
         >
           {/* Search Input */}
-          <div style={{ marginBottom: 16 }}>
-            <Input
-              placeholder="Search devices by Local ID, Position, Label, or Address..."
-              prefix={<SearchOutlined />}
-              size="large"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              allowClear
-              style={{ width: '100%' }}
-            />
-          </div>
-          
+         
           {filteredDevices.length > 0 ? (
             <Table
               dataSource={filteredDevices}
@@ -650,13 +687,15 @@ const CustomSettings = () => {
                     if (typeof address === 'object' && address) {
                       return address.address || address.name || `Address ${address.id || address._id}`;
                     }
-                    // If address is just an ID, try to find it in addresses list
+                    // If address is just an ID, try to find it in extracted addresses list
                     const addressId = record.addressId || address;
                     if (addressId) {
                       const foundAddress = addresses.find(a => (a.id || a._id) == addressId);
                       if (foundAddress) {
                         return foundAddress.address || foundAddress.name || `Address ${addressId}`;
                       }
+                      // If not found in addresses list, return the ID
+                      return `Address ${addressId}`;
                     }
                     return '-';
                   },
@@ -736,26 +775,7 @@ const CustomSettings = () => {
           const deviceData = deviceSettings[devId] || dev;
           const deviceName = deviceData.name || deviceData.accessControlName || deviceData.localId || deviceData.serialNumber || `Device ${devId}`;
           
-          // Fetch device details if not already loaded
-          if (!deviceSettings[devId]) {
-            fetchDeviceDetails(devId).then((deviceData) => {
-              if (deviceData) {
-                const settings = deviceData.settings || {};
-                const normalizedSettings = {};
-                Object.keys(settings).forEach(key => {
-                  normalizedSettings[String(key)] = settings[key];
-                });
-                
-                setDeviceSettings(prev => ({
-                  ...prev,
-                  [devId]: {
-                    ...deviceData,
-                    settings: normalizedSettings
-                  }
-                }));
-              }
-            });
-          }
+          // Don't fetch in render - use useEffect instead
           
           return (
             <div key={devId} style={{ marginBottom: 32 }}>
