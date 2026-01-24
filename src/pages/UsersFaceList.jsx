@@ -201,13 +201,7 @@ const UsersFaceList = () => {
           Users Face List
         </Title>
         <Space>
-          <Button
-            type="primary"
-            icon={<UserOutlined />}
-            size="large"
-          >
-            + Increase the Face Card Number
-          </Button>
+          
           <Button
             icon={<ReloadOutlined />}
             onClick={() => dispatch(fetchUsers({

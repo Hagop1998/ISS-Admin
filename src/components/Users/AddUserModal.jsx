@@ -40,9 +40,7 @@ const AddUserModal = ({ open, onCancel, onSubmit }) => {
         layout="vertical"
         onFinish={handleSubmit}
         className="mt-4"
-        initialValues={{
-          role: 'admin',
-        }}
+        initialValues={{ role: 'admin' }}
       >
         {/* First Name */}
         <Form.Item
@@ -103,12 +101,13 @@ const AddUserModal = ({ open, onCancel, onSubmit }) => {
           <Input placeholder="Enter phone number (e.g., +1234567890)" />
         </Form.Item>
 
-        {/* Role - Static Admin */}
+        {/* Role */}
         <Form.Item
           name="role"
           label="Role"
+          initialValue="admin"
         >
-          <Input disabled value="admin" />
+          <Input value="admin" disabled />
         </Form.Item>
 
         <Form.Item>

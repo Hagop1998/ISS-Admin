@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Descriptions, Tag, Table, Spin, message, Divider, Space } from 'antd';
+import { Modal, Descriptions, Tag, Table, Spin, message, Divider, Space, Button, Popconfirm } from 'antd';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { SettingOutlined, EyeOutlined, UserSwitchOutlined, DisconnectOutlined } from '@ant-design/icons';
 import { getDeviceById } from '../../store/slices/deviceSlice';
+import { updateAddress } from '../../store/slices/addressSlice';
 
 const DeviceDetailsModal = ({ open, onCancel, deviceId }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [deviceDetails, setDeviceDetails] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -122,7 +126,37 @@ const DeviceDetailsModal = ({ open, onCancel, deviceId }) => {
       ) : deviceDetails ? (
         <div>
           {/* Basic Device Information */}
-          <Descriptions title="Device Information" bordered column={2} size="small">
+          <Descriptions 
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span>Device Information</span>
+                <Button
+                  type="default"
+                  icon={<SettingOutlined />}
+                  onClick={() => {
+                    const deviceId = deviceDetails.id || deviceDetails._id;
+                    if (deviceId) {
+                      onCancel();
+                      navigate(`/access-control/custom-settings/${deviceId}`);
+                    } else {
+                      message.error('Device ID is missing');
+                    }
+                  }}
+                  style={{ 
+                    borderColor: '#1890ff',
+                    color: '#1890ff',
+                    marginLeft: 8
+                  }}
+                >
+                  Device Settings
+                </Button>
+              </div>
+            }
+            bordered 
+            column={2} 
+            size="small"
+            style={{ marginBottom: 16 }}
+          >
             <Descriptions.Item label="Device ID">{deviceDetails.id || '-'}</Descriptions.Item>
             <Descriptions.Item label="Local ID">{deviceDetails.localId || '-'}</Descriptions.Item>
             <Descriptions.Item label="Device Type">
@@ -177,13 +211,113 @@ const DeviceDetailsModal = ({ open, onCancel, deviceId }) => {
           {/* Address Information */}
           {deviceDetails.address && (
             <>
-              <Descriptions title="Address Information" bordered column={2} size="small">
+              <Descriptions 
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span>Address Information</span>
+                    <Button
+                      type="default"
+                      icon={<EyeOutlined />}
+                      onClick={() => {
+                        const addressId = deviceDetails.address.id || deviceDetails.address._id;
+                        if (addressId) {
+                          onCancel();
+                          navigate('/addresses', { 
+                            state: { 
+                              addressId: addressId,
+                              openDetails: true 
+                            } 
+                          });
+                        } else {
+                          message.error('Address ID is missing');
+                        }
+                      }}
+                      style={{ 
+                        borderColor: '#1890ff',
+                        color: '#1890ff',
+                        marginLeft: 8
+                      }}
+                    >
+                      View Address Details
+                    </Button>
+                  </div>
+                }
+                bordered 
+                column={2} 
+                size="small"
+                style={{ marginBottom: 16 }}
+              >
                 <Descriptions.Item label="Address ID">{deviceDetails.address.id || '-'}</Descriptions.Item>
                 <Descriptions.Item label="Address">{deviceDetails.address.address || '-'}</Descriptions.Item>
                 <Descriptions.Item label="City">{deviceDetails.address.city || '-'}</Descriptions.Item>
                 <Descriptions.Item label="Latitude">{deviceDetails.address.lat || '-'}</Descriptions.Item>
                 <Descriptions.Item label="Longitude">{deviceDetails.address.long || '-'}</Descriptions.Item>
-                <Descriptions.Item label="Manager ID">{deviceDetails.address.managerId || '-'}</Descriptions.Item>
+                <Descriptions.Item label="Manager ID">
+                  <Space>
+                    <span>{deviceDetails.address.managerId || 'Not assigned'}</span>
+                    {deviceDetails.address.managerId ? (
+                      <Popconfirm
+                        title="Unassign manager from this address?"
+                        description="Are you sure you want to unassign the manager?"
+                        onConfirm={async () => {
+                          try {
+                            const addressId = deviceDetails.address.id || deviceDetails.address._id;
+                            await dispatch(updateAddress({ 
+                              id: addressId, 
+                              addressData: { managerId: null } 
+                            })).unwrap();
+                            message.success('Manager unassigned from address successfully');
+                            // Refresh device details to get updated address info
+                            fetchDeviceDetails();
+                          } catch (error) {
+                            message.error(error?.message || 'Failed to unassign manager from address');
+                          }
+                        }}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <Button
+                          type="default"
+                          size="small"
+                          icon={<DisconnectOutlined />}
+                          style={{ 
+                            borderColor: '#1890ff',
+                            color: '#1890ff'
+                          }}
+                        >
+                          Unassign Manager
+                        </Button>
+                      </Popconfirm>
+                    ) : (
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<UserSwitchOutlined />}
+                        onClick={() => {
+                          const addressId = deviceDetails.address.id || deviceDetails.address._id;
+                          if (addressId) {
+                            onCancel();
+                            navigate('/addresses', { 
+                              state: { 
+                                addressId: addressId,
+                                openDetails: true,
+                                openAssignManager: true
+                              } 
+                            });
+                          } else {
+                            message.info('Please assign manager from the Addresses page');
+                          }
+                        }}
+                        style={{ 
+                          borderColor: '#1890ff',
+                          color: '#1890ff'
+                        }}
+                      >
+                        Assign Manager
+                      </Button>
+                    )}
+                  </Space>
+                </Descriptions.Item>
               </Descriptions>
               <Divider />
             </>

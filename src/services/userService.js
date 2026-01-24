@@ -144,7 +144,7 @@ export const userService = {
     const url = `${API_BASE_PATH}/users/${userId}`;
 
     const response = await fetch(url, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: getHeaders(),
       credentials: 'include',
       body: JSON.stringify(userData),

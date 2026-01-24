@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Typography, Breadcrumb, Popconfirm, Tooltip, Table, Input, Select, Badge, Alert, App } from 'antd';
 import { HomeOutlined, DeleteOutlined, UserOutlined, SearchOutlined, CheckCircleOutlined, BellOutlined, PlusOutlined } from '@ant-design/icons';
 import { fetchUsers, deleteUser, verifyUser, createUser, setSearch, setRole, setPage, setLimit } from '../store/slices/userSlice';
+import { userService } from '../services/userService';
 import { createUserSubscription } from '../store/slices/subscriptionSlice';
 import { fetchDevices } from '../store/slices/deviceSlice';
 import AddUserModal from '../components/Users/AddUserModal';
@@ -25,6 +26,7 @@ const UsersList = () => {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isSelectAddressModalOpen, setIsSelectAddressModalOpen] = useState(false);
   const [userToVerify, setUserToVerify] = useState(null);
+  const lastFetchedRef = useRef({ page: null, limit: null, search: null, role: null });
 
   // Sync search value with filter state
   useEffect(() => {
@@ -47,14 +49,37 @@ const UsersList = () => {
 
   // Fetch users when pagination or filters change
   useEffect(() => {
-    if (token) {
-      dispatch(fetchUsers({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: filters.search,
-        role: filters.role,
-      }));
+    if (!token) {
+      return;
     }
+
+    // Prevent duplicate calls with the same parameters
+    const currentParams = {
+      page: pagination.page,
+      limit: pagination.limit,
+      search: filters.search || null,
+      role: filters.role || null,
+    };
+
+    const lastParams = lastFetchedRef.current;
+    if (
+      lastParams.page === currentParams.page &&
+      lastParams.limit === currentParams.limit &&
+      lastParams.search === currentParams.search &&
+      lastParams.role === currentParams.role
+    ) {
+      return;
+    }
+
+    // Update last fetched params
+    lastFetchedRef.current = currentParams;
+
+    dispatch(fetchUsers({
+      page: currentParams.page,
+      limit: currentParams.limit,
+      search: currentParams.search,
+      role: currentParams.role,
+    }));
   }, [dispatch, token, pagination.page, pagination.limit, filters.search, filters.role]);
 
   const handleDelete = async (user) => {
@@ -165,11 +190,15 @@ const UsersList = () => {
 
   const handleAddUser = async (userData) => {
     try {
-    
-      await dispatch(createUser({
+      // Backend now accepts role during creation
+      const userDataWithRole = {
         ...userData,
-        role: 'admin',
-      })).unwrap();
+        role: 'admin' // Set role to admin statically
+      };
+      
+      // Create user with role
+      await dispatch(createUser(userDataWithRole)).unwrap();
+      
       message.success('User created successfully');
       setIsAddUserModalOpen(false);
       dispatch(fetchUsers({

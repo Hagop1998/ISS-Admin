@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Breadcrumb, Card, Form, Input, Button, Space, message, Select, Row, Col, InputNumber, Alert, Table, Tag } from 'antd';
 import { HomeOutlined, ReloadOutlined, CloudUploadOutlined, SettingOutlined, CloudServerOutlined, ApiOutlined, WarningOutlined, SearchOutlined } from '@ant-design/icons';
-import { fetchDevices, restartDevice, upgradeSoftware, upgradeConfig, setServerInfo, reloadSip } from '../store/slices/deviceSlice';
+import { restartDevice, upgradeSoftware, upgradeConfig, setServerInfo, reloadSip } from '../store/slices/deviceSlice';
 import { fetchAddresses } from '../store/slices/accessControlSlice';
 
 const { Title } = Typography;
@@ -13,8 +13,7 @@ const { TextArea } = Input;
 const DeviceConfig = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: devices, loading } = useSelector((state) => state.devices);
-  const { items: accessControlDevices, addresses, addressesLoading } = useSelector((state) => state.accessControl);
+  const { items: accessControlDevices, devicesLoading } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
   
   const [restartForm] = Form.useForm();
@@ -27,17 +26,60 @@ const DeviceConfig = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const hasFetchedRef = useRef(false);
 
-  const { loading: deviceActionLoading } = useSelector((state) => state.devices);
+  const { devicesLoading: deviceActionLoading } = useSelector((state) => state.devices);
+
+  // Extract unique addresses from devices (devices already have address info)
+  const addresses = useMemo(() => {
+    const addressMap = new Map();
+    const allDevices = accessControlDevices || [];
+    allDevices.forEach((device) => {
+      const address = device.address;
+      if (address && typeof address === 'object') {
+        const addressId = address.id || address._id || device.addressId;
+        if (addressId && !addressMap.has(addressId)) {
+          addressMap.set(addressId, {
+            id: addressId,
+            _id: addressId,
+            address: address.address || address.name || '',
+            name: address.name || address.address || '',
+            city: address.city || '',
+          });
+        }
+      } else if (device.addressId) {
+        // If address is not an object but we have addressId, create a minimal address entry
+        if (!addressMap.has(device.addressId)) {
+          addressMap.set(device.addressId, {
+            id: device.addressId,
+            _id: device.addressId,
+            address: `Address ${device.addressId}`,
+            name: `Address ${device.addressId}`,
+          });
+        }
+      }
+    });
+    return Array.from(addressMap.values());
+  }, [accessControlDevices]);
 
   useEffect(() => {
-    dispatch(fetchDevices({ page: 1, limit: 100 }));
-    dispatch(fetchAddresses());
-  }, [dispatch]);
+    if (!token) {
+      return;
+    }
+
+    // Prevent duplicate calls from React.StrictMode double render
+    if (hasFetchedRef.current) {
+      return;
+    }
+    hasFetchedRef.current = true;
+
+    // Fetch addresses (devices are already included in address response)
+    dispatch(fetchAddresses({ page: 1, limit: 10 }));
+  }, [dispatch, token]);
 
   // Filter devices based on address selection
   useEffect(() => {
-    let filtered = accessControlDevices || devices || [];
+    let filtered = accessControlDevices || [];
     
     if (selectedAddressId) {
       filtered = filtered.filter((dev) => {
@@ -47,7 +89,7 @@ const DeviceConfig = () => {
     }
     
     setFilteredDevices(filtered);
-  }, [selectedAddressId, accessControlDevices, devices]);
+  }, [selectedAddressId, accessControlDevices]);
 
   // Filter devices based on search term
   useEffect(() => {
@@ -57,7 +99,7 @@ const DeviceConfig = () => {
             const devAddressId = dev.addressId || dev.address?.id || dev.address?._id;
             return devAddressId == selectedAddressId;
           })
-        : (accessControlDevices || devices || [])
+        : (accessControlDevices || [])
       );
     } else {
       const searchLower = searchTerm.toLowerCase();
@@ -66,7 +108,7 @@ const DeviceConfig = () => {
             const devAddressId = dev.addressId || dev.address?.id || dev.address?._id;
             return devAddressId == selectedAddressId;
           })
-        : (accessControlDevices || devices || []);
+        : (accessControlDevices || []);
       
       const filtered = baseDevices.filter((device) => {
         const localId = (device.localId || device.serialNumber || '').toLowerCase();
@@ -90,7 +132,7 @@ const DeviceConfig = () => {
       });
       setFilteredDevices(filtered);
     }
-  }, [searchTerm, selectedAddressId, accessControlDevices, devices, addresses]);
+  }, [searchTerm, selectedAddressId, accessControlDevices, addresses]);
 
   useEffect(() => {
     if (!token) {
@@ -102,7 +144,7 @@ const DeviceConfig = () => {
   useEffect(() => {
     if (selectedDeviceId) {
       const selectedDevice = filteredDevices.find(d => (d.id || d._id) == selectedDeviceId) || 
-                            devices.find(d => (d.id || d._id) == selectedDeviceId) ||
+                            accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId) ||
                             accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId);
       
       if (selectedDevice) {
@@ -121,7 +163,7 @@ const DeviceConfig = () => {
       upgradeSoftwareForm.resetFields();
       upgradeConfigForm.resetFields();
     }
-  }, [selectedDeviceId, filteredDevices, devices, accessControlDevices, restartForm, reloadSipForm, serverInfoForm, upgradeSoftwareForm, upgradeConfigForm]);
+  }, [selectedDeviceId, filteredDevices, accessControlDevices, restartForm, reloadSipForm, serverInfoForm, upgradeSoftwareForm, upgradeConfigForm]);
 
   const handleRestart = async (values) => {
     try {
@@ -211,7 +253,7 @@ const DeviceConfig = () => {
   const getDevicesForForms = () => {
     if (selectedDeviceId) {
       const device = filteredDevices.find(d => (d.id || d._id) == selectedDeviceId) || 
-                    devices.find(d => (d.id || d._id) == selectedDeviceId);
+                    accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId);
       return device ? [device] : [];
     }
     if (selectedAddressId) {
@@ -220,7 +262,7 @@ const DeviceConfig = () => {
         return devAddressId == selectedAddressId;
       });
     }
-    return accessControlDevices || devices || [];
+    return accessControlDevices || [];
   };
 
   return (
@@ -272,7 +314,6 @@ const DeviceConfig = () => {
             value={selectedAddressId}
             onChange={handleAddressChange}
             style={{ width: '100%' }}
-            loading={addressesLoading}
             showSearch
             allowClear
             filterOption={(input, option) => {
@@ -302,18 +343,7 @@ const DeviceConfig = () => {
           styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
           title={selectedAddressId ? "Select Device" : "All Devices"}
         >
-          {/* Search Input */}
-          <div style={{ marginBottom: 16 }}>
-            <Input
-              placeholder="Search devices by Local ID, Position, Label, or Address..."
-              prefix={<SearchOutlined />}
-              size="large"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              allowClear
-              style={{ width: '100%' }}
-            />
-          </div>
+      
           
           {filteredDevices.length > 0 ? (
             <Table
@@ -421,7 +451,7 @@ const DeviceConfig = () => {
       {/* Device Config Grid - Show only when a device is selected */}
       {selectedDeviceId && (() => {
         const selectedDevice = filteredDevices.find(d => (d.id || d._id) == selectedDeviceId) || 
-                              devices.find(d => (d.id || d._id) == selectedDeviceId) ||
+                              accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId) ||
                               accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId);
         
         if (!selectedDevice) {
@@ -514,7 +544,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={deviceActionLoading}
+                  devicesLoading={deviceActionLoading}
                   icon={<ReloadOutlined />}
                   block
                   danger
@@ -555,7 +585,7 @@ const DeviceConfig = () => {
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  loading={loading}
+                  devicesLoading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -570,7 +600,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={deviceActionLoading}
+                  devicesLoading={deviceActionLoading}
                   icon={<ApiOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -610,7 +640,7 @@ const DeviceConfig = () => {
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  loading={loading}
+                  devicesLoading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -655,7 +685,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={deviceActionLoading}
+                  devicesLoading={deviceActionLoading}
                   icon={<CloudServerOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -695,7 +725,7 @@ const DeviceConfig = () => {
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  loading={loading}
+                  devicesLoading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -760,7 +790,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={deviceActionLoading}
+                  devicesLoading={deviceActionLoading}
                   icon={<CloudUploadOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
@@ -800,7 +830,7 @@ const DeviceConfig = () => {
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  loading={loading}
+                  devicesLoading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -865,7 +895,7 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={deviceActionLoading}
+                  devicesLoading={deviceActionLoading}
                   icon={<SettingOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}

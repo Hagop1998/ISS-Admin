@@ -609,6 +609,31 @@ export const deviceService = {
     }
   },
 
+  async getChipById(chipId) {
+    const url = `${API_BASE_PATH}/chips/${chipId}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      let errorMessage = 'Failed to fetch chip';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+
   async updateChip(chipId, chipData) {
     const url = `${API_BASE_PATH}/chips/${chipId}`;
 

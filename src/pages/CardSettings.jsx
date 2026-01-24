@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Breadcrumb, Card, Form, Input, Button, Space, message, Select, Row, Col, Table, Tag, Modal, Popconfirm } from 'antd';
-import { HomeOutlined, SafetyOutlined, CheckCircleOutlined, PlusOutlined, ReloadOutlined, StopOutlined, CheckOutlined, UserOutlined, UserDeleteOutlined } from '@ant-design/icons';
-import { fetchDevices, setICCard, fetchChips, createChip, updateChip } from '../store/slices/deviceSlice';
+import { useDebounce } from '../hooks/useDebounce';
+import { Typography, Breadcrumb, Card, Form, Input, Button, Space, message, Select, Row, Col, Table, Tag, Modal, Popconfirm, Descriptions, Divider, Spin } from 'antd';
+import { HomeOutlined, SafetyOutlined, CheckCircleOutlined, PlusOutlined, ReloadOutlined, StopOutlined, CheckOutlined, UserOutlined, UserDeleteOutlined, SettingOutlined } from '@ant-design/icons';
+import { setICCard, fetchChips, createChip, updateChip } from '../store/slices/deviceSlice';
+import { deviceService } from '../services/deviceService';
 import { fetchUsers } from '../store/slices/userSlice';
 import { fetchAddresses } from '../store/slices/accessControlSlice';
 import { ChipCardOperationEnum } from '../constants/enums';
@@ -14,7 +16,7 @@ const { Option } = Select;
 const CardSettings = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: devices, loading, chips, chipsLoading, chipsPagination } = useSelector((state) => state.devices);
+  const { chips, chipsLoading, chipsPagination } = useSelector((state) => state.devices);
   const { users, loading: usersLoading } = useSelector((state) => state.users);
   const { addresses, addressesLoading } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
@@ -24,10 +26,14 @@ const CardSettings = () => {
   const [assignChipForm] = Form.useForm();
   const [isCreateChipModalOpen, setIsCreateChipModalOpen] = useState(false);
   const [isAssignChipModalOpen, setIsAssignChipModalOpen] = useState(false);
+  const [isChipDetailsModalOpen, setIsChipDetailsModalOpen] = useState(false);
+  const [chipDetails, setChipDetails] = useState(null);
+  const [chipDetailsLoading, setChipDetailsLoading] = useState(false);
   const [assigningChip, setAssigningChip] = useState(null);
   const [selectedAddressDeviceId, setSelectedAddressDeviceId] = useState(null);
   const [selectedAddressDeviceLocalId, setSelectedAddressDeviceLocalId] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [userSearchValue, setUserSearchValue] = useState('');
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -35,10 +41,23 @@ const CardSettings = () => {
 
   const { loading: deviceActionLoading } = useSelector((state) => state.devices);
 
+  const lastFetchedChipsRef = useRef({ page: null, limit: null });
+  const hasFetchedUsersForAssignRef = useRef(false);
+  const lastUserSearchRef = useRef(null);
+  
+  const debouncedUserSearch = useDebounce(userSearchValue, 300);
+
   useEffect(() => {
-    dispatch(fetchDevices({ page: 1, limit: 100 }));
-    dispatch(fetchUsers({ page: 1, limit: 100 }));
-    dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
+    // Fetch chips only if page or limit changed
+    const currentPage = pagination.current;
+    const currentLimit = pagination.pageSize;
+    if (
+      lastFetchedChipsRef.current.page !== currentPage ||
+      lastFetchedChipsRef.current.limit !== currentLimit
+    ) {
+      dispatch(fetchChips({ page: currentPage, limit: currentLimit }));
+      lastFetchedChipsRef.current = { page: currentPage, limit: currentLimit };
+    }
   }, [dispatch, pagination.current, pagination.pageSize]);
 
   useEffect(() => {
@@ -50,11 +69,106 @@ const CardSettings = () => {
   useEffect(() => {
     if (isCreateChipModalOpen) {
       dispatch(fetchAddresses());
+      dispatch(fetchUsers({ page: 1, limit: 10 }));
       // Initialize chipStatus to unAssigned when modal opens
       createChipForm.setFieldsValue({ chipStatus: 'unAssigned' });
       setSelectedUserId(null);
     }
   }, [isCreateChipModalOpen, dispatch, createChipForm]);
+
+  useEffect(() => {
+    if (isAssignChipModalOpen) {
+      // Fetch users when Assign Chip modal opens (only once)
+      if (!hasFetchedUsersForAssignRef.current) {
+        dispatch(fetchUsers({ page: 1, limit: 10, search: '' }));
+        hasFetchedUsersForAssignRef.current = true;
+        lastUserSearchRef.current = '';
+      }
+      assignChipForm.setFieldsValue({ userId: null });
+      setUserSearchValue('');
+    } else {
+      // Reset ref when modal closes
+      hasFetchedUsersForAssignRef.current = false;
+      lastUserSearchRef.current = null;
+    }
+  }, [isAssignChipModalOpen, dispatch, assignChipForm]);
+
+  // Handle search with phone number prefix logic
+  const handleUserSearch = (value) => {
+    // Remove Armenian flag emoji if present
+    let cleanedValue = value.replace(/🇦🇲\s*/g, '').trim();
+    
+    if (!cleanedValue) {
+      setUserSearchValue('');
+      return;
+    }
+    
+    if (cleanedValue.startsWith('+374')) {
+      setUserSearchValue(cleanedValue);
+      return;
+    }
+    
+    // Check if the input starts with digits (phone number)
+    const isPhoneNumber = /^\d/.test(cleanedValue);
+    
+    if (isPhoneNumber) {
+      // If it's a phone number and doesn't already have +374, add it
+      const searchValue = `+374${cleanedValue}`;
+      setUserSearchValue(searchValue);
+    } else {
+      // For text searches (name, email), use as is
+      setUserSearchValue(cleanedValue);
+    }
+  };
+
+  // Fetch users when debounced search value changes
+  // useEffect(() => {
+  //   if (isAssignChipModalOpen && debouncedUserSearch !== undefined) {
+  //     // Only fetch if search value actually changed
+  //     if (lastUserSearchRef.current !== debouncedUserSearch) {
+  //       let searchQuery = debouncedUserSearch || '';
+        
+  //       // Use the search query as is, including the + prefix for phone numbers
+  //       if (searchQuery) {
+  //         dispatch(fetchUsers({ page: 1, limit: 10, search: searchQuery }));
+  //       } else {
+  //         // Empty search - fetch all users
+  //         dispatch(fetchUsers({ page: 1, limit: 10, search: '' }));
+  //       }
+        
+  //       lastUserSearchRef.current = debouncedUserSearch;
+  //     }
+  //   }
+  // }, [debouncedUserSearch, isAssignChipModalOpen, dispatch]);
+
+  useEffect(() => {
+    if (isAssignChipModalOpen && debouncedUserSearch !== undefined) {
+      if (lastUserSearchRef.current !== debouncedUserSearch) {
+        let searchQuery = debouncedUserSearch || '';
+  
+        // If user types only numbers → prefix +374 for display
+        if (/^\d+$/.test(searchQuery)) {
+          searchQuery = `+374${searchQuery}`;
+        }
+  
+        // If phone number starts with +374, convert to local format (0...)
+        if (searchQuery.startsWith('+374')) {
+          // Remove +374 and add 0 at the beginning
+          const phoneWithoutPrefix = searchQuery.substring(4); // Remove '+374'
+          const localFormat = `${phoneWithoutPrefix.replace(/^0/, '')}`;
+          dispatch(fetchUsers({ page: 1, limit: 10, search: localFormat }));
+        } else if (searchQuery) {
+          // name / email search - use as is
+          dispatch(fetchUsers({ page: 1, limit: 10, search: searchQuery }));
+        } else {
+          // Empty search - fetch all users
+          dispatch(fetchUsers({ page: 1, limit: 10, search: '' }));
+        }
+  
+        lastUserSearchRef.current = debouncedUserSearch;
+      }
+    }
+  }, [debouncedUserSearch, isAssignChipModalOpen, dispatch]);
 
   const handleTableChange = (newPagination) => {
     setPagination({
@@ -70,7 +184,6 @@ const CardSettings = () => {
         return;
       }
 
-      // Set chipStatus based on userId: active if userId exists, unAssigned if not
       const chipStatus = values.userId ? 'active' : 'unAssigned';
 
       const chipPayload = {
@@ -113,9 +226,7 @@ const CardSettings = () => {
   const handleAddressChange = (addressId) => {
     const selectedAddress = addresses.find(addr => (addr.id || addr._id) === addressId);
     if (selectedAddress?.device?.id) {
-      // Store device.id for payload
       setSelectedAddressDeviceId(selectedAddress.device.id);
-      // Store device.localId for display
       setSelectedAddressDeviceLocalId(selectedAddress.device.localId || null);
       createChipForm.setFieldsValue({ deviceId: selectedAddress.device.localId });
     } else {
@@ -164,7 +275,6 @@ const CardSettings = () => {
         chipData: { chipStatus } 
       })).unwrap();
       
-      // Step 2: Call setICCard with cardOpt: 1 (ADD)
       try {
         const icCardPayload = {
           localId: deviceLocalId,
@@ -197,7 +307,7 @@ const CardSettings = () => {
 
     try {
       const chipId = assigningChip.id || assigningChip._id;
-      const deviceLocalId = assigningChip.device?.localId || devices.find(d => (d.id || d._id) === assigningChip.deviceId)?.localId;
+      const deviceLocalId = assigningChip.device?.localId;
 
       if (!deviceLocalId) {
         message.error('Device local ID not found');
@@ -235,9 +345,31 @@ const CardSettings = () => {
     }
   };
 
+  const handleViewChipDetails = async (chip) => {
+    const chipId = chip.id || chip._id;
+    if (!chipId) {
+      message.error('Chip ID is missing');
+      return;
+    }
+
+    setChipDetailsLoading(true);
+    setIsChipDetailsModalOpen(true);
+    setChipDetails(null);
+
+    try {
+      const data = await deviceService.getChipById(chipId);
+      const chipData = data?.data || data?.chip || data;
+      setChipDetails(chipData);
+    } catch (error) {
+      message.error(error?.message || 'Failed to fetch chip details');
+      setIsChipDetailsModalOpen(false);
+    } finally {
+      setChipDetailsLoading(false);
+    }
+  };
+
   const handleUnassignChip = async (chipId, serialNumber, deviceLocalId) => {
     try {
-      // Step 1: Update chip status to unAssigned and remove userId
       await dispatch(updateChip({ 
         chipId, 
         chipData: { 
@@ -246,11 +378,10 @@ const CardSettings = () => {
         } 
       })).unwrap();
       
-      // Step 2: Call setICCard with cardOpt: 3 (CLEAR/Unassign)
       try {
         const icCardPayload = {
           localId: deviceLocalId,
-          cardOpt: ChipCardOperationEnum.CLEAR, // 3 (Unassign)
+          cardOpt: ChipCardOperationEnum.CLEAR, 
           cardSN: serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
@@ -267,7 +398,6 @@ const CardSettings = () => {
 
   const handleSetICCard = async (values) => {
     try {
-      // Step 1: Set IC Card
       const payload = {
         localId: values.localId,
         cardOpt: Number(values.cardOpt),
@@ -276,14 +406,13 @@ const CardSettings = () => {
       await dispatch(setICCard(payload)).unwrap();
       message.success('IC card set successfully');
 
-      // Step 2: Find device by localId to get deviceId
-      const selectedDevice = devices.find(device => device.localId === values.localId);
-      if (!selectedDevice) {
-        message.error('Device not found');
+      const selectedChip = chips?.find(chip => chip.device?.localId === values.localId);
+      const deviceId = selectedChip?.device?.id || selectedChip?.device?._id;
+      
+      if (!deviceId) {
+        message.error('Device not found. Please ensure the device is associated with a chip.');
         return;
       }
-
-      const deviceId = selectedDevice.id || selectedDevice._id;
       const userId = Number(values.userId);
 
       if (!deviceId || !userId) {
@@ -291,11 +420,10 @@ const CardSettings = () => {
         return;
       }
 
-      // Step 3: Create chip automatically
       const chipPayload = {
         serialNumber: values.serialNumber, 
         userId: userId,
-        deviceId: selectedDevice.id,
+        deviceId: deviceId,
         chipType: 'ic',
         chipStatus: 'unAssigned',
       };
@@ -314,16 +442,34 @@ const CardSettings = () => {
       title: 'Serial Number',
       dataIndex: 'serialNumber',
       key: 'serialNumber',
+      render: (text, record) => (
+        <Button
+          type="link"
+          onClick={() => handleViewChipDetails(record)}
+          style={{ padding: 0 }}
+        >
+          {text || '-'}
+        </Button>
+      ),
     },
     {
-      title: 'User ID',
-      dataIndex: 'userId',
-      key: 'userId',
+      title: 'Address',
+      key: 'address',
+      render: (_, record) => {
+        const address = record.device?.address?.address || 
+                       record.device?.address?.name || 
+                       record.device?.address?.title ||
+                       '-';
+        return address;
+      },
     },
     {
-      title: 'Device ID',
-      dataIndex: 'deviceId',
-      key: 'deviceId',
+      title: 'Device Local ID',
+      key: 'deviceLocalId',
+      render: (_, record) => {
+        const localId = record.device?.localId || '-';
+        return localId;
+      },
     },
     {
       title: 'Chip Type',
@@ -360,7 +506,7 @@ const CardSettings = () => {
       width: 100,
       render: (_, record) => {
         const chipId = record.id || record._id;
-        const deviceLocalId = record.device?.localId || devices.find(d => (d.id || d._id) === record.deviceId)?.localId;
+        const deviceLocalId = record.device?.localId;
         
         const chipStatusLower = record.chipStatus?.toLowerCase();
         
@@ -789,6 +935,7 @@ const CardSettings = () => {
           setIsAssignChipModalOpen(false);
           setAssigningChip(null);
           assignChipForm.resetFields();
+          setUserSearchValue('');
         }}
         footer={null}
         width={500}
@@ -816,29 +963,42 @@ const CardSettings = () => {
             rules={[{ required: true, message: 'Please select a user' }]}
           >
             <Select
-              placeholder="Select user"
+              placeholder="Search by name, email, or phone number"
               showSearch
-              filterOption={(input, option) => {
-                const label = option?.label || option?.children || '';
-                const labelStr = typeof label === 'string' ? label : String(label);
-                return labelStr.toLowerCase().includes(input.toLowerCase());
-              }}
+              searchValue={userSearchValue.startsWith('+374') ? `🇦🇲 ${userSearchValue}` : userSearchValue}
+              onSearch={handleUserSearch}
+              filterOption={false}
               loading={usersLoading}
               optionLabelProp="label"
+              notFoundContent={usersLoading ? 'Loading...' : 'No users found'}
             >
-              {Array.isArray(users) && users.map((user) => {
-                const userId = user.id || user._id;
-                const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || `User ${userId}`;
-                const userLabel = `${userName} (${user.email || 'No email'})`;
-                return (
-                  <Option key={userId} value={userId} label={userLabel}>
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{userName}</div>
-                      <div style={{ fontSize: '12px', color: '#999' }}>{user.email || 'No email'}</div>
+              {Array.isArray(users) && users.length > 0 ? (
+                users.map((user) => {
+                  const userId = user.id || user._id;
+                  const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || `User ${userId}`;
+                  const userPhone = user.phone ? ` - ${user.phone}` : '';
+                  const userLabel = `${userName} (${user.email || 'No email'})${userPhone}`;
+                  return (
+                    <Option key={userId} value={userId} label={userLabel}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{userName}</div>
+                        <div style={{ fontSize: '12px', color: '#999' }}>
+                          {user.email || 'No email'}
+                          {user.phone && ` • ${user.phone}`}
+                        </div>
+                      </div>
+                    </Option>
+                  );
+                })
+              ) : (
+                !usersLoading && (
+                  <Option disabled value="no-users">
+                    <div style={{ textAlign: 'center', color: '#999', padding: '8px 0' }}>
+                      No users found
                     </div>
                   </Option>
-                );
-              })}
+                )
+              )}
             </Select>
               </Form.Item>
 
@@ -862,6 +1022,174 @@ const CardSettings = () => {
             </Space>
               </Form.Item>
             </Form>
+      </Modal>
+
+      <Modal
+        title="Chip Details"
+        open={isChipDetailsModalOpen}
+        onCancel={() => {
+          setIsChipDetailsModalOpen(false);
+          setChipDetails(null);
+        }}
+        footer={null}
+        width={700}
+        destroyOnClose
+      >
+        {chipDetailsLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin size="large" />
+          </div>
+        ) : chipDetails ? (
+          <div>
+            <Descriptions title="Chip Information" bordered column={2} size="small">
+              <Descriptions.Item label="Chip ID">{chipDetails.id || chipDetails._id || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Serial Number">{chipDetails.serialNumber || '-'}</Descriptions.Item>
+              <Descriptions.Item label="User ID">
+                {chipDetails.userId || '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Chip Type">
+                <Tag>{chipDetails.chipType || '-'}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Status">
+                <Space>
+                  <Tag color={
+                    chipDetails.chipStatus?.toLowerCase() === 'active' ? 'green' :
+                    chipDetails.chipStatus?.toLowerCase() === 'unassigned' ? 'orange' :
+                    chipDetails.chipStatus?.toLowerCase() === 'blocked' ? 'red' : 'default'
+                  }>
+                    {chipDetails.chipStatus || '-'}
+                  </Tag>
+                  {(chipDetails.chipStatus?.toLowerCase() === 'unassigned' || chipDetails.chipStatus === 'unAssigned') && (
+                    <Button
+                      type="link"
+                      icon={<UserOutlined />}
+                      size="small"
+                      onClick={() => {
+                        handleAssignChip(chipDetails);
+                        setIsChipDetailsModalOpen(false);
+                      }}
+                      style={{ padding: 0, color: '#1890ff' }}
+                    >
+                      Assign
+                    </Button>
+                  )}
+                  {(chipDetails.chipStatus?.toLowerCase() === 'active' || chipDetails.chipStatus === 'Active') && (
+                    <Popconfirm
+                      title="Are you sure you want to unassign this chip from the user?"
+                      onConfirm={async () => {
+                        const chipId = chipDetails.id || chipDetails._id;
+                        const deviceLocalId = chipDetails.device?.localId || 
+                                             chipDetails.device?.localId;
+                        if (chipId && deviceLocalId) {
+                          await handleUnassignChip(chipId, chipDetails.serialNumber, deviceLocalId);
+                          // Refresh chip details after unassign
+                          const data = await deviceService.getChipById(chipId);
+                          const chipData = data?.data || data?.chip || data;
+                          setChipDetails(chipData);
+                        }
+                      }}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button
+                        type="link"
+                        icon={<UserDeleteOutlined />}
+                        size="small"
+                        danger
+                        style={{ padding: 0 }}
+                      >
+                        Unassign
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </Space>
+              </Descriptions.Item>
+              <Descriptions.Item label="Assigned At">
+                {chipDetails.assignedAt ? new Date(chipDetails.assignedAt).toLocaleString() : '-'}
+              </Descriptions.Item>
+              {chipDetails.createdAt && (
+                <Descriptions.Item label="Created At">
+                  {new Date(chipDetails.createdAt).toLocaleString()}
+                </Descriptions.Item>
+              )}
+              {chipDetails.updatedAt && (
+                <Descriptions.Item label="Updated At">
+                  {new Date(chipDetails.updatedAt).toLocaleString()}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+
+            {chipDetails.device && (
+              <>
+                <Divider />
+                <Descriptions 
+                  title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span>Device Information</span>
+                      <Button
+                        type="default"
+                        icon={<SettingOutlined />}
+                        onClick={() => {
+                          const deviceId = chipDetails.device.id || chipDetails.device._id;
+                          if (deviceId) {
+                            setIsChipDetailsModalOpen(false);
+                            navigate(`/access-control/custom-settings/${deviceId}`);
+                          }
+                        }}
+                        style={{ 
+                          borderColor: '#1890ff',
+                          color: '#1890ff',
+                          marginLeft: 8
+                        }}
+                      >
+                        Device Settings
+                      </Button>
+                    </div>
+                  }
+                  bordered 
+                  column={2} 
+                  size="small"
+                >
+                  <Descriptions.Item label="Device ID">{chipDetails.device.id || chipDetails.device._id || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Device Local ID">{chipDetails.device.localId || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Device Type">
+                    <Tag>{chipDetails.device.deviceType || '-'}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    <Space>
+                      <Tag color={chipDetails.device.isOnline ? 'success' : 'error'}>
+                        {chipDetails.device.isOnline ? 'Online' : 'Offline'}
+                      </Tag>
+                      <Tag color={chipDetails.device.isEnabled ? 'success' : 'default'}>
+                        {chipDetails.device.isEnabled ? 'Enabled' : 'Disabled'}
+                      </Tag>
+                    </Space>
+                  </Descriptions.Item>
+                </Descriptions>
+              </>
+            )}
+
+            {chipDetails.user && (
+              <>
+                <Divider />
+                <Descriptions title="User Information" bordered column={2} size="small">
+                  <Descriptions.Item label="User ID">{chipDetails.user.id || chipDetails.user._id || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Name">
+                    {chipDetails.user.firstName && chipDetails.user.lastName
+                      ? `${chipDetails.user.firstName} ${chipDetails.user.lastName}`
+                      : '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Email">{chipDetails.user.email || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Phone">{chipDetails.user.phone || '-'}</Descriptions.Item>
+                </Descriptions>
+              </>
+            )}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+            No chip details available
+          </div>
+        )}
       </Modal>
     </div>
   );

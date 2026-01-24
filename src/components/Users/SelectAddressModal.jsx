@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Modal, Form, Select, Button, Space, Spin, Radio, Typography, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAddresses } from '../../store/slices/addressSlice';
@@ -15,13 +15,22 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [subscriptionComplete, setSubscriptionComplete] = useState(null);
 
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
     if (open) {
-      dispatch(fetchAddresses());
+      // Only fetch addresses when modal opens, not on page load
+      if (!hasFetchedRef.current) {
+        dispatch(fetchAddresses());
+        hasFetchedRef.current = true;
+      }
       form.resetFields();
       setCurrentStep(1);
       setSelectedAddress(null);
       setSubscriptionComplete(null);
+    } else {
+      // Reset the ref when modal closes so it can fetch fresh data next time
+      hasFetchedRef.current = false;
     }
   }, [open, dispatch, form]);
 

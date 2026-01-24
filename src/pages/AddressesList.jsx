@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tooltip, Table } from 'antd';
-import { HomeOutlined, DeleteOutlined, PlusOutlined, EditOutlined, UserOutlined, UserSwitchOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { HomeOutlined, DeleteOutlined, PlusOutlined, EditOutlined, UserOutlined, UserSwitchOutlined, EnvironmentOutlined, DisconnectOutlined } from '@ant-design/icons';
 import { fetchAddresses, createAddress, updateAddress, deleteAddress } from '../store/slices/addressSlice';
 import AddAddressModal from '../components/Addresses/AddAddressModal';
 import AddressUsersModal from '../components/Addresses/AddressUsersModal';
@@ -13,6 +13,7 @@ const { Title, Text } = Typography;
 const AddressesList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, loading, error, pagination } = useSelector((state) => state.addresses);
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
@@ -24,6 +25,7 @@ const AddressesList = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [detailsAddress, setDetailsAddress] = useState(null);
   const hasFetchedRef = React.useRef(false);
+  const hasHandledNavigationRef = React.useRef(false);
 
   // Fetch addresses on mount (prevent duplicate calls from React.StrictMode)
   useEffect(() => {
@@ -33,6 +35,30 @@ const AddressesList = () => {
     hasFetchedRef.current = true;
     dispatch(fetchAddresses());
   }, [dispatch]);
+
+  // Handle navigation from Device Details modal to open address details
+  useEffect(() => {
+    if (location.state?.addressId && location.state?.openDetails && !hasHandledNavigationRef.current && items.length > 0) {
+      const addressId = location.state.addressId;
+      const address = items.find(addr => (addr.id || addr._id) == addressId);
+      
+      if (address) {
+        setDetailsAddress(address);
+        setIsDetailsModalOpen(true);
+        hasHandledNavigationRef.current = true;
+        
+        // If openAssignManager is true, trigger assign manager after modal opens
+        if (location.state?.openAssignManager) {
+          setTimeout(() => {
+            // This will be handled by the AddressDetailsModal component
+          }, 100);
+        }
+        
+        // Clear the navigation state
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, items, navigate, location.pathname]);
 
   // Redirect to login if token is cleared
   useEffect(() => {
@@ -120,7 +146,12 @@ const AddressesList = () => {
   const handleAssignToManager = async (address) => {
     try {
       const addressId = address._id || address.id;
-      const managerId = address.managerId || null;
+      const managerId = address.managerId;
+      
+      if (!managerId) {
+        message.error('Manager ID is required');
+        return;
+      }
       
       await dispatch(updateAddress({ 
         id: addressId, 
@@ -129,8 +160,30 @@ const AddressesList = () => {
       
       message.success('Address assigned to manager successfully');
       dispatch(fetchAddresses());
+      
+      if (detailsAddress && (detailsAddress.id === addressId || detailsAddress._id === addressId)) {
+        const updatedAddress = { ...detailsAddress, managerId: Number(managerId) };
+        setDetailsAddress(updatedAddress);
+      }
     } catch (error) {
       const errorMsg = error?.message || error?.toString() || 'Failed to assign address to manager';
+      message.error(errorMsg);
+    }
+  };
+
+  const handleUnassignManager = async (address) => {
+    try {
+      const addressId = address._id || address.id;
+      
+      await dispatch(updateAddress({ 
+        id: addressId, 
+        addressData: { managerId: null } 
+      })).unwrap();
+      
+      message.success('Manager unassigned from address successfully');
+      dispatch(fetchAddresses());
+    } catch (error) {
+      const errorMsg = error?.message || error?.toString() || 'Failed to unassign manager from address';
       message.error(errorMsg);
     }
   };
@@ -253,14 +306,32 @@ const AddressesList = () => {
               size="small"
             />
           </Tooltip>
-          <Tooltip title="Assign to Manager">
-            <Button
-              type="text"
-              icon={<UserSwitchOutlined />}
-              onClick={() => handleAssignToManager(record)}
-              size="small"
-            />
-          </Tooltip>
+          {record.managerId ? (
+            <Popconfirm
+              title="Unassign manager from this address?"
+              description="Are you sure you want to unassign the manager from this address?"
+              onConfirm={() => handleUnassignManager(record)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Tooltip title="Unassign Manager">
+                <Button
+                  type="text"
+                  icon={<DisconnectOutlined />}
+                  size="small"
+                />
+              </Tooltip>
+            </Popconfirm>
+          ) : (
+            <Tooltip title="Assign Manager">
+              <Button
+                type="text"
+                icon={<UserSwitchOutlined />}
+                onClick={() => handleViewDetails(record)}
+                size="small"
+              />
+            </Tooltip>
+          )}
           <Popconfirm
             title="Delete this address?"
             description="Are you sure you want to delete this address?"
@@ -395,6 +466,8 @@ const AddressesList = () => {
         }}
         address={detailsAddress}
         onViewUsers={handleViewUsersFromDetails}
+        onAssignManager={handleAssignToManager}
+        onUnassignManager={handleUnassignManager}
       />
     </div>
   );

@@ -1,14 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Descriptions, Tag, Table, Spin, message, Divider, Space, Button, Popconfirm } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
-import { useDispatch } from 'react-redux';
-import { deleteUser } from '../../store/slices/userSlice';
+import { Modal, Descriptions, Tag, Table, Spin, message, Divider, Space, Button, Popconfirm, Select, Form } from 'antd';
+import { DeleteOutlined, UserSwitchOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteUser, fetchUsers } from '../../store/slices/userSlice';
+import { updateAddress } from '../../store/slices/addressSlice';
+
+const { Option } = Select;
 
 const UserDetailsModal = ({ open, onCancel, userId, onUserDeleted }) => {
   const dispatch = useDispatch();
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [assignManagerModalOpen, setAssignManagerModalOpen] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState(null);
+  const [form] = Form.useForm();
+  const { users: allUsers, loading: usersLoading } = useSelector((state) => state.users);
+  const [adminsFetched, setAdminsFetched] = useState(false);
+
+  const adminUsers = allUsers.filter(u => u.role === 'admin' || u.role === 'superAdmin');
 
   useEffect(() => {
     if (open && userId) {
@@ -18,6 +28,47 @@ const UserDetailsModal = ({ open, onCancel, userId, onUserDeleted }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, userId]);
+
+  useEffect(() => {
+    if (assignManagerModalOpen && !adminsFetched && adminUsers.length === 0) {
+      dispatch(fetchUsers({ page: 1, limit: 100, role: 'admin' }))
+        .then(() => setAdminsFetched(true))
+        .catch(error => {
+          console.error('Failed to fetch admin users:', error);
+          message.error('Failed to load admin users');
+        });
+    }
+  }, [assignManagerModalOpen, adminsFetched, adminUsers.length, dispatch]);
+
+  useEffect(() => {
+    if (!assignManagerModalOpen) {
+      form.resetFields();
+      setSelectedManagerId(null);
+    }
+  }, [assignManagerModalOpen, form]);
+
+  const handleAssignManagerSubmit = async () => {
+    if (!selectedManagerId) {
+      message.warning('Please select a manager');
+      return;
+    }
+
+    try {
+      const addressId = userDetails.address.id || userDetails.address._id;
+      await dispatch(updateAddress({ 
+        id: addressId, 
+        addressData: { managerId: Number(selectedManagerId) } 
+      })).unwrap();
+      
+      message.success('Address assigned to manager successfully');
+      setAssignManagerModalOpen(false);
+      form.resetFields();
+      setSelectedManagerId(null);
+      fetchUserDetails();
+    } catch (error) {
+      message.error(error?.message || 'Failed to assign address to manager');
+    }
+  };
 
   const fetchUserDetails = async () => {
     setLoading(true);
@@ -186,7 +237,60 @@ const UserDetailsModal = ({ open, onCancel, userId, onUserDeleted }) => {
                 <Descriptions.Item label="Address ID">{userDetails.address.id || '-'}</Descriptions.Item>
                 <Descriptions.Item label="Address">{userDetails.address.address || '-'}</Descriptions.Item>
                 <Descriptions.Item label="City">{userDetails.address.city || '-'}</Descriptions.Item>
-                <Descriptions.Item label="Manager ID">{userDetails.address.managerId || '-'}</Descriptions.Item>
+                <Descriptions.Item label="Manager ID">
+                  <Space>
+                    <span>{userDetails.address.managerId || 'Not assigned'}</span>
+                    {userDetails.address.managerId ? (
+                      <Popconfirm
+                        title="Unassign manager from this address?"
+                        description="Are you sure you want to unassign the manager?"
+                        onConfirm={async () => {
+                          try {
+                            const addressId = userDetails.address.id || userDetails.address._id;
+                            await dispatch(updateAddress({ 
+                              id: addressId, 
+                              addressData: { managerId: null } 
+                            })).unwrap();
+                            message.success('Manager unassigned from address successfully');
+                            // Refresh user details to get updated address info
+                            fetchUserDetails();
+                          } catch (error) {
+                            message.error(error?.message || 'Failed to unassign manager from address');
+                          }
+                        }}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <Button
+                          type="default"
+                          size="small"
+                          icon={<DisconnectOutlined />}
+                          style={{ 
+                            borderColor: '#1890ff',
+                            color: '#1890ff'
+                          }}
+                        >
+                          Unassign Manager
+                        </Button>
+                      </Popconfirm>
+                    ) : (
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<UserSwitchOutlined />}
+                        onClick={() => {
+                          message.info('Please assign manager from the Addresses page');
+                        }}
+                        style={{ 
+                          borderColor: '#1890ff',
+                          color: '#1890ff'
+                        }}
+                      >
+                        Assign Manager
+                      </Button>
+                    )}
+                  </Space>
+                </Descriptions.Item>
                 <Descriptions.Item label="Latitude">{userDetails.address.lat || '-'}</Descriptions.Item>
                 <Descriptions.Item label="Longitude">{userDetails.address.long || '-'}</Descriptions.Item>
               </Descriptions>
@@ -329,6 +433,47 @@ const UserDetailsModal = ({ open, onCancel, userId, onUserDeleted }) => {
           No user details available
         </div>
       )}
+
+      {/* Assign Manager Modal */}
+      <Modal
+        title="Assign Manager"
+        open={assignManagerModalOpen}
+        onCancel={() => setAssignManagerModalOpen(false)}
+        onOk={handleAssignManagerSubmit}
+        okText="Assign"
+        cancelText="Cancel"
+        width={500}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            label="Select Manager"
+            rules={[{ required: true, message: 'Please select a manager' }]}
+          >
+            <Select
+              placeholder="Select a manager"
+              showSearch
+              loading={usersLoading}
+              value={selectedManagerId}
+              onChange={(value) => setSelectedManagerId(value)}
+              filterOption={(input, option) =>
+                String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              notFoundContent={usersLoading ? <Spin size="small" /> : 'No admin users found'}
+            >
+              {adminUsers.map((adminUser) => (
+                <Option 
+                  key={adminUser.id || adminUser._id} 
+                  value={adminUser.id || adminUser._id}
+                >
+                  {adminUser.firstName && adminUser.lastName
+                    ? `${adminUser.firstName} ${adminUser.lastName} (${adminUser.email || 'No email'})`
+                    : adminUser.email || `Admin ${adminUser.id || adminUser._id}`}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Modal>
   );
 };

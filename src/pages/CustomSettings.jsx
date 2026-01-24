@@ -35,7 +35,7 @@ import {
   SearchOutlined
 } from '@ant-design/icons';
 import { setDoor, updateDevice, getDeviceById } from '../store/slices/deviceSlice';
-import { fetchDevices } from '../store/slices/accessControlSlice';
+import { fetchAddresses } from '../store/slices/accessControlSlice';
 import { SetDoorTypeEnum } from '../constants/enums';
 
 const { Title } = Typography;
@@ -47,7 +47,7 @@ const CustomSettings = () => {
   const { deviceId } = useParams();
   const [form] = Form.useForm();
   const { loading } = useSelector((state) => state.devices);
-  const { items: accessControlDevices } = useSelector((state) => state.accessControl);
+  const { items: accessControlDevices, addressesLoading } = useSelector((state) => state.accessControl);
   const token = useSelector((state) => state.auth.token);
   const [devices, setDevices] = useState([]);
   const [filteredDevices, setFilteredDevices] = useState([]);
@@ -138,16 +138,10 @@ const CustomSettings = () => {
   }, [dispatch, deviceSettings]);
 
   const updateDevicesForAddress = useCallback((addressId) => {
-    const filtered = accessControlDevices.filter((dev) => {
-      const devAddressId = dev.addressId || dev.address?.id || dev.address?._id;
-      return devAddressId == addressId;
-    });
-    setDevices(filtered);
-    // Filtered devices will be updated by the search effect
-    
+    // This function is kept for compatibility but devices are now filtered directly from accessControlDevices
     // Don't fetch device details here - only fetch when device is actually selected
     // This prevents multiple unnecessary API calls
-  }, [accessControlDevices]);
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -166,8 +160,8 @@ const CustomSettings = () => {
     }
     hasFetchedRef.current = true;
 
-    // Fetch devices (addresses are already included in device response)
-    dispatch(fetchDevices({ page: 1, limit: 10 }));
+    // Fetch addresses (devices are already included in address response)
+    dispatch(fetchAddresses({ page: 1, limit: 10 }));
     
     // If deviceId in URL, fetch device details and set address
     if (deviceId) {
@@ -182,19 +176,23 @@ const CustomSettings = () => {
   }, [deviceId, token, dispatch, fetchDeviceDetails]);
 
   useEffect(() => {
-    // Show all devices by default, or filter by address if selected
+    // Filter devices based on address selection
+    let filtered = accessControlDevices || [];
+    
     if (selectedAddressId) {
-      updateDevicesForAddress(selectedAddressId);
-    } else {
-      // Show all devices when no address is selected
-      const allDevices = accessControlDevices || [];
-      setDevices(allDevices);
-      // Initialize filtered devices
-      if (!searchTerm.trim()) {
-        setFilteredDevices(allDevices);
-      }
+      filtered = filtered.filter((dev) => {
+        const devAddressId = dev.addressId || dev.address?.id || dev.address?._id;
+        return devAddressId == selectedAddressId;
+      });
     }
-  }, [selectedAddressId, accessControlDevices, updateDevicesForAddress, searchTerm]);
+    
+    setDevices(filtered);
+    
+    // Apply search filter if there's a search term
+    if (!searchTerm.trim()) {
+      setFilteredDevices(filtered);
+    }
+  }, [selectedAddressId, accessControlDevices, searchTerm]);
 
   // Filter devices based on search term
   useEffect(() => {
@@ -731,7 +729,7 @@ const CustomSettings = () => {
                       }}
                       style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                     >
-                      Configure
+                      Settings
                     </Button>
                   ),
                 },
