@@ -370,11 +370,11 @@ const CardSettings = () => {
 
   const handleUnassignChip = async (chipId, serialNumber, deviceLocalId) => {
     try {
+      // Don't send userId at all - omit it from the payload
       await dispatch(updateChip({ 
         chipId, 
         chipData: { 
-          chipStatus: 'unAssigned',
-          userId: null
+          chipStatus: 'unAssigned'
         } 
       })).unwrap();
       

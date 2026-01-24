@@ -6,7 +6,8 @@ import { HomeOutlined, DeleteOutlined, UserOutlined, SearchOutlined, CheckCircle
 import { fetchUsers, deleteUser, verifyUser, createUser, setSearch, setRole, setPage, setLimit } from '../store/slices/userSlice';
 import { userService } from '../services/userService';
 import { createUserSubscription } from '../store/slices/subscriptionSlice';
-import { fetchDevices } from '../store/slices/deviceSlice';
+import { fetchDevices, fetchChips, updateChip, setICCard } from '../store/slices/deviceSlice';
+import { ChipCardOperationEnum } from '../constants/enums';
 import AddUserModal from '../components/Users/AddUserModal';
 import SelectAddressModal from '../components/Users/SelectAddressModal';
 
@@ -119,13 +120,21 @@ const UsersList = () => {
   };
 
   const handleVerifyAndCreateSubscription = async (formValues) => {
-    if (!userToVerify) return;
+    console.log('handleVerifyAndCreateSubscription called with:', formValues);
+    if (!userToVerify) {
+      console.error('No user to verify');
+      return;
+    }
 
     try {
       const userId = userToVerify._id || userToVerify.id;
       const addressId = formValues.addressId;
       const hasSubscription = formValues.hasSubscription; 
-      const subscriptionId = formValues.subscriptionId; 
+      const subscriptionId = formValues.subscriptionId;
+      const shouldAssignChip = formValues.assignChip;
+      const chipId = formValues.chipId;
+
+      console.log('User ID:', userId, 'Address ID:', addressId);
 
       if (!userId) {
         message.error('User ID is missing');
@@ -138,7 +147,9 @@ const UsersList = () => {
       }
 
       // First verify the user
+      console.log('Verifying user:', userId);
       await dispatch(verifyUser(userId)).unwrap();
+      console.log('User verified successfully');
 
       if (hasSubscription === true && subscriptionId) {
         let devicesList = devices || [];
@@ -169,6 +180,58 @@ const UsersList = () => {
       } else {
         // Verify user without subscription (subscriptionId is null)
         message.success('User verified successfully without subscription.');
+      }
+
+      // Handle chip assignment if selected
+      if (shouldAssignChip === true && chipId) {
+        try {
+          // Get device info for the chip
+          let devicesList = devices || [];
+          if (!devices || devices.length === 0) {
+            const devicesResponse = await dispatch(fetchDevices({ page: 1, limit: 100 })).unwrap();
+            devicesList = devicesResponse?.results || devicesResponse?.data || (Array.isArray(devicesResponse) ? devicesResponse : []);
+          }
+          
+          const device = devicesList.find(dev => (dev.addressId || dev.address?.id || dev.address?._id) == addressId);
+          const deviceLocalId = device?.localId;
+
+          if (!deviceLocalId) {
+            message.warning('User verified but chip assignment failed: Device local ID not found');
+            // Continue to close modal and refresh list
+          } else {
+            // Update chip with userId and status to active
+          await dispatch(updateChip({ 
+            chipId, 
+            chipData: { 
+              userId: Number(userId),
+              chipStatus: 'active'
+            } 
+          })).unwrap();
+
+          // Get chip details to find serial number
+          const chipsResponse = await dispatch(fetchChips({ page: 1, limit: 100 })).unwrap();
+          const chipsList = chipsResponse?.results || chipsResponse?.data || (Array.isArray(chipsResponse) ? chipsResponse : []);
+          const chip = chipsList?.find(c => (c.id || c._id) === chipId);
+          
+          if (chip && chip.serialNumber) {
+            // Call setICCard with cardOpt: 2 (DELETE/Assign)
+            try {
+              const icCardPayload = {
+                localId: deviceLocalId,
+                cardOpt: ChipCardOperationEnum.DELETE, // 2 (Assign)
+                cardSN: chip.serialNumber,
+              };
+              await dispatch(setICCard(icCardPayload)).unwrap();
+              message.success('Chip assigned to user successfully.');
+            } catch (icCardError) {
+              message.warning('User verified but failed to set IC card for chip');
+            }
+          }
+          } // End of deviceLocalId check
+        } catch (chipError) {
+          console.error('Chip assignment error:', chipError);
+          message.warning('User verified but chip assignment failed: ' + (chipError?.message || 'Unknown error'));
+        }
       }
       
       setIsSelectAddressModalOpen(false);
