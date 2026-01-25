@@ -203,7 +203,7 @@ const CardSettings = () => {
       try {
         const icCardPayload = {
           localId: selectedAddressDeviceLocalId,
-          cardOpt: ChipCardOperationEnum.ADD, // 1
+          cardOpt: ChipCardOperationEnum.ADD,
           cardSN: values.serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
@@ -323,11 +323,11 @@ const CardSettings = () => {
         } 
       })).unwrap();
 
-      // Step 2: Call setICCard with cardOpt: 2 (DELETE/Assign)
+      // Step 2: Call setICCard - always send 1 (ADD) for assign
       try {
         const icCardPayload = {
           localId: deviceLocalId,
-          cardOpt: ChipCardOperationEnum.DELETE, // 2 (Assign)
+          cardOpt: ChipCardOperationEnum.ADD, // Always 1 for assign
           cardSN: assigningChip.serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
@@ -368,12 +368,13 @@ const CardSettings = () => {
     }
   };
 
-  const handleUnassignChip = async (chipId, serialNumber, deviceLocalId) => {
+  const handleUnassignChip = async (chipId, serialNumber, deviceLocalId, chipRecord) => {
     try {
-      // Don't send userId at all - omit it from the payload
+      // Send userId as null and chipStatus as unAssigned
       await dispatch(updateChip({ 
         chipId, 
         chipData: { 
+          userId: null,
           chipStatus: 'unAssigned'
         } 
       })).unwrap();
@@ -381,7 +382,7 @@ const CardSettings = () => {
       try {
         const icCardPayload = {
           localId: deviceLocalId,
-          cardOpt: ChipCardOperationEnum.CLEAR, 
+          cardOpt: ChipCardOperationEnum.ADD, // Always 1 for unassign
           cardSN: serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
@@ -525,7 +526,7 @@ const CardSettings = () => {
             {(chipStatusLower === 'active' || record.chipStatus === 'Active') && (
               <Popconfirm
                 title="Are you sure you want to unassign this chip from the user?"
-                onConfirm={() => handleUnassignChip(chipId, record.serialNumber, deviceLocalId)}
+                onConfirm={() => handleUnassignChip(chipId, record.serialNumber, deviceLocalId, record)}
                 okText="Yes"
                 cancelText="No"
                 disabled={!deviceLocalId}
@@ -734,7 +735,6 @@ const CardSettings = () => {
                 >
                   <Option value={ChipCardOperationEnum.ADD}>Add</Option>
                   <Option value={ChipCardOperationEnum.DELETE}>Assign</Option>
-                  <Option value={ChipCardOperationEnum.CLEAR}>Unassign</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -1081,7 +1081,7 @@ const CardSettings = () => {
                         const deviceLocalId = chipDetails.device?.localId || 
                                              chipDetails.device?.localId;
                         if (chipId && deviceLocalId) {
-                          await handleUnassignChip(chipId, chipDetails.serialNumber, deviceLocalId);
+                          await handleUnassignChip(chipId, chipDetails.serialNumber, deviceLocalId, chipDetails);
                           // Refresh chip details after unassign
                           const data = await deviceService.getChipById(chipId);
                           const chipData = data?.data || data?.chip || data;

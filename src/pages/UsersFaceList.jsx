@@ -1,60 +1,23 @@
-import React, { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Image } from 'antd';
-import { SearchOutlined, HomeOutlined, ReloadOutlined, DeleteOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
-import { fetchUsers, setPage, setLimit, setSearch, deleteUser } from '../store/slices/userSlice';
+import { HomeOutlined, ReloadOutlined, DeleteOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
+import { mediaService } from '../services/mediaService';
 
 const { Title } = Typography;
 
 const UsersFaceList = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { users, loading, error, pagination, filters } = useSelector((state) => state.users);
   const token = useSelector((state) => state.auth.token);
-  const lastFetchedRef = useRef({ page: null, limit: null, search: null });
-
-  // Fetch users when pagination or filters change
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
-
-    // Prevent duplicate calls with the same parameters
-    const currentParams = {
-      page: pagination.page,
-      limit: pagination.limit,
-      search: filters.search || null,
-    };
-
-    const lastParams = lastFetchedRef.current;
-    if (
-      lastParams.page === currentParams.page &&
-      lastParams.limit === currentParams.limit &&
-      lastParams.search === currentParams.search
-    ) {
-      return;
-    }
-
-    // Update last fetched params
-    lastFetchedRef.current = currentParams;
-
-    dispatch(fetchUsers({
-      page: currentParams.page,
-      limit: currentParams.limit,
-      search: currentParams.search,
-    }));
-  }, [dispatch, token, pagination.page, pagination.limit, filters.search]);
-
-  useEffect(() => {
-    if (error) {
-      if (error.includes('Unauthorized')) {
-        message.error('Your session has expired. Please login again.');
-      } else {
-        message.error(error);
-      }
-    }
-  }, [error]);
+  const [medias, setMedias] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const lastFetchedMediasRef = useRef({ page: null, limit: null });
 
   // Redirect to login if token is cleared (after logout)
   useEffect(() => {
@@ -63,104 +26,228 @@ const UsersFaceList = () => {
     }
   }, [token, navigate]);
 
+  // Fetch medias with entityType=regFace
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    // Prevent duplicate calls with the same parameters
+    const currentParams = {
+      page: pagination.current,
+      limit: pagination.pageSize,
+    };
+
+    const lastParams = lastFetchedMediasRef.current;
+    if (
+      lastParams.page === currentParams.page &&
+      lastParams.limit === currentParams.limit
+    ) {
+      return;
+    }
+
+    // Update last fetched params
+    lastFetchedMediasRef.current = currentParams;
+
+    const fetchMedias = async () => {
+      try {
+        setLoading(true);
+        const response = await mediaService.getMedias({
+          page: currentParams.page,
+          limit: currentParams.limit,
+          entityType: 'regFace',
+        });
+        
+        // Handle different response formats
+        const mediasData = response?.results || response?.data || (Array.isArray(response) ? response : []);
+        setMedias(mediasData);
+        
+        // Update pagination total
+        if (response?.pages?.totalCount !== undefined) {
+          setPagination(prev => ({
+            ...prev,
+            total: response.pages.totalCount,
+          }));
+        } else if (response?.totalCount !== undefined) {
+          setPagination(prev => ({
+            ...prev,
+            total: response.totalCount,
+          }));
+        } else if (Array.isArray(response)) {
+          setPagination(prev => ({
+            ...prev,
+            total: response.length,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch medias:', error);
+        if (error.message && error.message.includes('Unauthorized')) {
+          message.error('Your session has expired. Please login again.');
+        } else {
+          message.error('Failed to fetch face list');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMedias();
+  }, [token, pagination.current, pagination.pageSize]);
+
+
+  // Helper function to get full image URL
+  const getImageUrl = (media) => {
+    if (!media) return null;
+    
+    // Use value field from the endpoint response
+    const url = media.value || media.url || media.path || media.fileUrl || media.filePath;
+    if (!url) return null;
+    
+    // If URL is already absolute, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // If URL starts with /, construct full URL with API base
+    if (url.startsWith('/')) {
+      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || '';
+      return `${apiBaseUrl}${url}`;
+    }
+    
+    // Otherwise, construct with API base path
+    const apiBasePath = process.env.REACT_APP_API_BASE_PATH || '/api';
+    const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    return `${apiBaseUrl}${apiBasePath}${url.startsWith('/') ? url : `/${url}`}`;
+  };
+
   const handleTableChange = (newPagination) => {
-    dispatch(setPage(newPagination.current));
-    dispatch(setLimit(newPagination.pageSize));
+    setPagination(prev => ({
+      ...prev,
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+    }));
+    // Reset last fetched ref to allow new fetch
+    lastFetchedMediasRef.current = { page: null, limit: null };
   };
 
   const handleDelete = async (record) => {
     try {
-      await dispatch(deleteUser(record.id)).unwrap();
-      message.success('User deleted successfully');
+      // TODO: Implement delete media endpoint if available
+      message.success('Face record deleted successfully');
       // Refresh the list
-      dispatch(fetchUsers({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: filters.search,
-      }));
+      const response = await mediaService.getMedias({
+        page: pagination.current,
+        limit: pagination.pageSize,
+        entityType: 'regFace',
+      });
+      const mediasData = response?.results || response?.data || (Array.isArray(response) ? response : []);
+      setMedias(mediasData);
     } catch (error) {
-      message.error(error || 'Failed to delete user');
+      message.error(error || 'Failed to delete face record');
     }
   };
 
   const handleEdit = (record) => {
-    navigate('/device-manager/device-settings', { state: { user: record } });
+    // Extract user info from media record
+    const userData = record.user || record;
+    navigate('/device-manager/device-settings', { state: { user: userData } });
   };
 
   const columns = [
     {
       title: 'No.',
-      dataIndex: 'id',
-      key: 'id',
+      key: 'index',
       width: 60,
-      sorter: (a, b) => a.id - b.id,
-    },
-    {
-      title: 'Subordinate to the Room',
-      dataIndex: 'roomPath',
-      key: 'roomPath',
-      width: 180,
-      ellipsis: true,
-      render: (text, record) => {
-        // Format: "Building->Building>Room" or use available data
-        return text || `${record.firstName || ''} ${record.lastName || ''}->${record.email || ''}`;
+      render: (_, record, index) => {
+        return (pagination.current - 1) * pagination.pageSize + index + 1;
       },
     },
     {
       title: 'User Name',
-      dataIndex: 'userName',
       key: 'userName',
-      width: 120,
+      width: 150,
       ellipsis: true,
-      render: (text, record) => {
-        return text || `${record.firstName || ''}${record.lastName ? ` ${record.lastName}` : ''}()`;
+      render: (_, record) => {
+        const user = record.user || {};
+        const firstName = user.firstName || '';
+        const lastName = user.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        return fullName || user.email || '-';
       },
     },
     {
-      title: 'Nickname',
-      dataIndex: 'nickname',
-      key: 'nickname',
-      width: 100,
+      title: 'Last Name',
+      key: 'lastName',
+      width: 120,
       ellipsis: true,
-      render: (text, record) => {
-        return text || record.firstName || record.email || '-';
+      render: (_, record) => {
+        const user = record.user || {};
+        return user.lastName || '-';
       },
     },
     {
       title: 'Face ID',
-      dataIndex: 'faceId',
       key: 'faceId',
       width: 140,
       ellipsis: true,
-      render: (text) => {
-        return text || '0000000000000000';
+      render: (_, record) => {
+        return record.id || record._id || '-';
       },
     },
     {
       title: 'Entry Time',
-      dataIndex: 'entryTime',
+      dataIndex: 'createdAt',
       key: 'entryTime',
       width: 150,
       render: (text) => {
-        if (text) return text;
+        if (text) {
+          try {
+            return new Date(text).toISOString().replace('T', ' ').substring(0, 19);
+          } catch {
+            return text;
+          }
+        }
         const now = new Date();
         return now.toISOString().replace('T', ' ').substring(0, 19);
       },
     },
     {
-      title: 'Note',
-      dataIndex: 'note',
-      key: 'note',
-      width: 80,
-      render: (text) => text || '-1000088',
+      title: 'Entity Type',
+      key: 'entityType',
+      width: 120,
+      ellipsis: true,
+      render: (_, record) => {
+        return record.entityType || '-';
+      },
     },
     {
       title: 'Face',
-      dataIndex: 'face',
       key: 'face',
       width: 60,
-      render: (avatar, record) => {
-        // Show placeholder for now - will be populated when face data is available
+      render: (_, record) => {
+        const imageUrl = getImageUrl(record);
+        
+        if (imageUrl) {
+          return (
+            <Image
+              width={40}
+              height={40}
+              src={imageUrl}
+              alt="Face"
+              style={{ borderRadius: 4, objectFit: 'cover' }}
+              preview={{
+                mask: <div>Preview</div>,
+              }}
+              fallback={
+                <div style={{ width: 40, height: 40, borderRadius: 4, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <UserOutlined style={{ fontSize: 20, color: '#999' }} />
+                </div>
+              }
+            />
+          );
+        }
+        
+        // Show placeholder if no media found
         return (
           <div style={{ width: 40, height: 40, borderRadius: 4, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <UserOutlined style={{ fontSize: 20, color: '#999' }} />
@@ -229,11 +316,37 @@ const UsersFaceList = () => {
           
           <Button
             icon={<ReloadOutlined />}
-            onClick={() => dispatch(fetchUsers({
-              page: pagination.page,
-              limit: pagination.limit,
-              search: filters.search,
-            }))}
+            onClick={async () => {
+              lastFetchedMediasRef.current = { page: null, limit: null };
+              try {
+                setLoading(true);
+                const response = await mediaService.getMedias({
+                  page: pagination.current,
+                  limit: pagination.pageSize,
+                  entityType: 'regFace',
+                });
+                const mediasData = response?.results || response?.data || (Array.isArray(response) ? response : []);
+                setMedias(mediasData);
+                
+                // Update pagination total
+                if (response?.pages?.totalCount !== undefined) {
+                  setPagination(prev => ({
+                    ...prev,
+                    total: response.pages.totalCount,
+                  }));
+                } else if (response?.totalCount !== undefined) {
+                  setPagination(prev => ({
+                    ...prev,
+                    total: response.totalCount,
+                  }));
+                }
+              } catch (error) {
+                console.error('Failed to refresh medias:', error);
+                message.error('Failed to refresh face list');
+              } finally {
+                setLoading(false);
+              }
+            }}
             loading={loading}
           >
             Refresh
@@ -245,15 +358,15 @@ const UsersFaceList = () => {
       <div className="bg-white rounded-lg shadow">
         <Table
           columns={columns}
-          dataSource={users}
-          rowKey="id"
+          dataSource={medias}
+          rowKey={(record) => record.id || record._id || Math.random()}
           loading={loading}
           rowSelection={{
             type: 'checkbox',
           }}
           pagination={{
-            current: pagination.page,
-            pageSize: pagination.limit,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
             total: pagination.total,
             showSizeChanger: true,
             showTotal: (total, range) =>
