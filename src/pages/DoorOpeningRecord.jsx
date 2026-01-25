@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Typography, Breadcrumb, message, Card, Tag } from 'antd';
@@ -18,6 +18,8 @@ const DoorOpeningRecord = () => {
   const token = useSelector((state) => state.auth.token);
   const [isUserDetailsModalOpen, setIsUserDetailsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const lastFetchedAddressesRef = useRef(false);
+  const lastFetchedHistoryRef = useRef({ page: null, limit: null });
 
   // Create a map of addressId to address for quick lookup
   const addressLookupMap = useMemo(() => {
@@ -55,18 +57,46 @@ const DoorOpeningRecord = () => {
 
   // Fetch addresses when component loads
   useEffect(() => {
-    if (token) {
-      dispatch(fetchAddresses());
+    if (!token) {
+      return;
     }
+
+    // Prevent duplicate calls
+    if (lastFetchedAddressesRef.current) {
+      return;
+    }
+
+    lastFetchedAddressesRef.current = true;
+    dispatch(fetchAddresses());
   }, [dispatch, token]);
 
+  // Fetch user history when pagination changes
   useEffect(() => {
-    if (token) {
-      dispatch(fetchUserHistory({
-        page: pagination.page,
-        limit: pagination.limit,
-      }));
+    if (!token) {
+      return;
     }
+
+    // Prevent duplicate calls with the same parameters
+    const currentParams = {
+      page: pagination.page,
+      limit: pagination.limit,
+    };
+
+    const lastParams = lastFetchedHistoryRef.current;
+    if (
+      lastParams.page === currentParams.page &&
+      lastParams.limit === currentParams.limit
+    ) {
+      return;
+    }
+
+    // Update last fetched params
+    lastFetchedHistoryRef.current = currentParams;
+
+    dispatch(fetchUserHistory({
+      page: currentParams.page,
+      limit: currentParams.limit,
+    }));
   }, [dispatch, token, pagination.page, pagination.limit]);
 
   // Show error messages

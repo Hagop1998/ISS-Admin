@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Image } from 'antd';
@@ -12,14 +12,39 @@ const UsersFaceList = () => {
   const navigate = useNavigate();
   const { users, loading, error, pagination, filters } = useSelector((state) => state.users);
   const token = useSelector((state) => state.auth.token);
+  const lastFetchedRef = useRef({ page: null, limit: null, search: null });
 
+  // Fetch users when pagination or filters change
   useEffect(() => {
-    dispatch(fetchUsers({
+    if (!token) {
+      return;
+    }
+
+    // Prevent duplicate calls with the same parameters
+    const currentParams = {
       page: pagination.page,
       limit: pagination.limit,
-      search: filters.search,
+      search: filters.search || null,
+    };
+
+    const lastParams = lastFetchedRef.current;
+    if (
+      lastParams.page === currentParams.page &&
+      lastParams.limit === currentParams.limit &&
+      lastParams.search === currentParams.search
+    ) {
+      return;
+    }
+
+    // Update last fetched params
+    lastFetchedRef.current = currentParams;
+
+    dispatch(fetchUsers({
+      page: currentParams.page,
+      limit: currentParams.limit,
+      search: currentParams.search,
     }));
-  }, [dispatch, pagination.page, pagination.limit, filters.search]);
+  }, [dispatch, token, pagination.page, pagination.limit, filters.search]);
 
   useEffect(() => {
     if (error) {
