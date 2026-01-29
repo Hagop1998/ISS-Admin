@@ -88,16 +88,40 @@ const AddressesList = () => {
 
   const handleAdd = async (values) => {
     try {
+      let lat = null;
+      let long = null;
+      
+      if (values.lat !== null && values.lat !== undefined && values.lat !== '') {
+        const latNum = typeof values.lat === 'string' ? parseFloat(values.lat) : Number(values.lat);
+        if (!isNaN(latNum) && latNum >= -90 && latNum <= 90) {
+          lat = latNum;
+        }
+      }
+      
+      if (values.long !== null && values.long !== undefined && values.long !== '') {
+        const longNum = typeof values.long === 'string' ? parseFloat(values.long) : Number(values.long);
+        if (!isNaN(longNum) && longNum >= -180 && longNum <= 180) {
+          long = longNum;
+        }
+      }
+      
       const addressData = {
-        ...values,
-        managerId: values.managerId ? Number(values.managerId) : null,
+        address: values.address || '',
+        city: values.city || '',
+        lat: lat,
+        long: long,
+        managerId: values.managerId && values.managerId !== 0 ? Number(values.managerId) : null,
       };
+      
+      // Log for debugging
+      console.log('Creating address with data:', addressData);
       
       await dispatch(createAddress(addressData)).unwrap();
       message.success('Address created successfully');
       setIsAddModalOpen(false);
       dispatch(fetchAddresses());
     } catch (error) {
+      console.error('Address creation error:', error);
       const errorMsg = error?.message || error?.toString() || 'Failed to create address';
       message.error(errorMsg);
     }
@@ -112,8 +136,72 @@ const AddressesList = () => {
     try {
       // Use _id if available, otherwise use id
       const addressId = editingAddress._id || editingAddress.id;
-      console.log('Updating address:', { id: addressId, data: values });
-      await dispatch(updateAddress({ id: addressId, addressData: values })).unwrap();
+      
+      // Prepare form values with proper types
+      let lat = null;
+      let long = null;
+      
+      if (values.lat !== null && values.lat !== undefined && values.lat !== '') {
+        const latNum = typeof values.lat === 'string' ? parseFloat(values.lat) : Number(values.lat);
+        if (!isNaN(latNum) && latNum >= -90 && latNum <= 90) {
+          lat = latNum;
+        }
+      }
+      
+      if (values.long !== null && values.long !== undefined && values.long !== '') {
+        const longNum = typeof values.long === 'string' ? parseFloat(values.long) : Number(values.long);
+        if (!isNaN(longNum) && longNum >= -180 && longNum <= 180) {
+          long = longNum;
+        }
+      }
+      
+      const managerId = values.managerId ? Number(values.managerId) : null;
+      
+      // Compare with initial values and only include changed fields
+      const changedFields = {};
+      
+      // Compare address
+      if (values.address !== (editingAddress.address || '')) {
+        changedFields.address = values.address || '';
+      }
+      
+      // Compare city
+      if (values.city !== (editingAddress.city || '')) {
+        changedFields.city = values.city || '';
+      }
+      
+      // Compare lat (handle null/undefined cases)
+      const initialLat = editingAddress.lat !== null && editingAddress.lat !== undefined 
+        ? (typeof editingAddress.lat === 'string' ? parseFloat(editingAddress.lat) : Number(editingAddress.lat))
+        : null;
+      if (lat !== initialLat && (lat !== null || initialLat !== null)) {
+        changedFields.lat = lat;
+      }
+      
+      // Compare long (handle null/undefined cases)
+      const initialLong = editingAddress.long !== null && editingAddress.long !== undefined 
+        ? (typeof editingAddress.long === 'string' ? parseFloat(editingAddress.long) : Number(editingAddress.long))
+        : null;
+      if (long !== initialLong && (long !== null || initialLong !== null)) {
+        changedFields.long = long;
+      }
+      
+      // Compare managerId
+      const initialManagerId = editingAddress.managerId || null;
+      if (managerId !== initialManagerId) {
+        changedFields.managerId = managerId;
+      }
+      
+      // Only send request if there are changes
+      if (Object.keys(changedFields).length === 0) {
+        message.info('No changes detected');
+        setIsEditModalOpen(false);
+        setEditingAddress(null);
+        return;
+      }
+      
+      console.log('Updating address:', { id: addressId, changedFields });
+      await dispatch(updateAddress({ id: addressId, addressData: changedFields })).unwrap();
       message.success('Address updated successfully');
       setIsEditModalOpen(false);
       setEditingAddress(null);

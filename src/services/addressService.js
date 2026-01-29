@@ -65,12 +65,53 @@ export const addressService = {
         throw new Error('Unauthorized. Please login again.');
       }
       let errorMessage = 'Failed to create address';
+      let errorDetails = null;
       try {
         const errorData = await response.json();
-        errorMessage = errorData?.message || errorData?.errors?.[0]?.message || errorMessage;
+        errorDetails = errorData;
+        
+        // Log full error response for debugging
+        console.error('Server error response:', errorData);
+        console.error('Request payload was:', addressData);
+        
+        // Try to extract detailed error message
+        if (errorData?.message) {
+          if (typeof errorData.message === 'object') {
+            const messageKeys = Object.keys(errorData.message);
+            if (messageKeys.length > 0) {
+              const firstError = errorData.message[messageKeys[0]];
+              errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+            } else {
+              errorMessage = JSON.stringify(errorData.message);
+            }
+          } else {
+            errorMessage = errorData.message;
+          }
+        } else if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage = errorData.errors[0].message || JSON.stringify(errorData.errors[0]);
+        } else if (errorData?.error) {
+          errorMessage = errorData.error;
+        } else {
+          // Log full error for debugging
+          errorMessage = errorData?.message || JSON.stringify(errorData) || errorMessage;
+        }
       } catch (error) {
+        // If response is not JSON, try to get text
+        try {
+          const text = await response.text();
+          console.error('Server error (non-JSON):', text);
+          errorMessage = text || errorMessage;
+        } catch (textError) {
+          console.error('Failed to parse error response:', error);
+        }
       }
-      throw new Error(errorMessage);
+      
+      // Include error details in the error message for debugging
+      const fullErrorMessage = errorDetails 
+        ? `${errorMessage} (Details: ${JSON.stringify(errorDetails)})`
+        : errorMessage;
+      
+      throw new Error(fullErrorMessage);
     }
 
     if (response.status === 204) {

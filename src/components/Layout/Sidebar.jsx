@@ -10,6 +10,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const expandedMenus = useSelector((state) => state.navigation.expandedMenus);
+  const user = useSelector((state) => state.auth.user);
+  const isSuperAdmin = user?.role === 'superAdmin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superAdmin';
 
   const isExpanded = (menuId) => expandedMenus.includes(menuId);
   const isActive = (path) => location.pathname === path;
@@ -289,6 +292,68 @@ const Sidebar = ({ isOpen, onClose }) => {
               </div>
             </button>
           </div>
+
+          {/* Subscription Management - Only for SuperAdmin */}
+          {isSuperAdmin && (
+            <div className="mt-4">
+              <button
+                className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                  isActive('/subscriptions/create')
+                    ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                    : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                }`}
+                onClick={() => handleNavigation('/subscriptions/create')}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Create Subscription</span>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {isAdmin && (
+            <div className="mt-4">
+              <button
+                className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                  isActive('/media/upload-video')
+                    ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                    : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                }`}
+                onClick={() => handleNavigation('/media/upload-video')}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Upload Video</span>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Videos List - Only for SuperAdmin */}
+          {isSuperAdmin && (
+            <div className="mt-4">
+              <button
+                className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                  isActive('/media/videos')
+                    ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                    : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                }`}
+                onClick={() => handleNavigation('/media/videos')}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Videos List</span>
+                </div>
+              </button>
+            </div>
+          )}
 
           <div className="mt-4">
             <button

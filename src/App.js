@@ -18,6 +18,9 @@ import Home from './pages/Home';
 import DoorOpeningRecord from './pages/DoorOpeningRecord';
 import DoorConfiguration from './pages/DoorConfiguration';
 import CustomSettings from './pages/CustomSettings';
+import CreateSubscription from './pages/CreateSubscription';
+import VideoUpload from './pages/VideoUpload';
+import VideosList from './pages/VideosList';
 import './App.css';
 
 const ProtectedLayout = () => {
@@ -81,6 +84,9 @@ function App() {
               <Route path="/users" element={<UsersList />} />
               <Route path="/user-settings/personal-data" element={<PersonalData />} />
               <Route path="/user-settings/change-password" element={<ChangePassword />} />
+              <Route path="/subscriptions/create" element={<CreateSubscription />} />
+              <Route path="/media/upload-video" element={<VideoUpload />} />
+              <Route path="/media/videos" element={<VideosList />} />
             </Route>
           </Routes>
         </AntdApp>
