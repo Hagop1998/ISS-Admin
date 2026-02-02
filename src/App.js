@@ -21,6 +21,7 @@ import CustomSettings from './pages/CustomSettings';
 import CreateSubscription from './pages/CreateSubscription';
 import VideoUpload from './pages/VideoUpload';
 import VideosList from './pages/VideosList';
+import AnnouncementsList from './pages/AnnouncementsList';
 import './App.css';
 
 const ProtectedLayout = () => {
@@ -87,6 +88,7 @@ function App() {
               <Route path="/subscriptions/create" element={<CreateSubscription />} />
               <Route path="/media/upload-video" element={<VideoUpload />} />
               <Route path="/media/videos" element={<VideosList />} />
+              <Route path="/announcements" element={<AnnouncementsList />} />
             </Route>
           </Routes>
         </AntdApp>

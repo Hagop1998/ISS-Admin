@@ -36,7 +36,7 @@ const Layout = ({ children }) => {
         <footer className="bg-white border-t border-gray-200 py-4 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-center text-gray-600 text-sm">
-              Copyright © 2017 - {new Date().getFullYear()} 触点云平台. All Rights Reserved.
+              Copyright © 2020 - {new Date().getFullYear()} All Rights Reserved.
             </p>
           </div>
         </footer>

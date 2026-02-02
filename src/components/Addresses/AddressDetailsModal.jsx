@@ -159,7 +159,7 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers, onAssignMan
                   onClick={openInYandexMaps}
                   size="small"
                 >
-                  Open in Yandex Maps
+                  Open in Google Maps
                 </Button>
               </Space>
             ) : (
@@ -176,7 +176,7 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers, onAssignMan
                   onClick={openInYandexMaps}
                   size="small"
                 >
-                  Open in Yandex Maps
+                  Open in Google Maps
                 </Button>
               </Space>
             ) : (
@@ -216,7 +216,7 @@ const AddressDetailsModal = ({ open, onCancel, address, onViewUsers, onAssignMan
                   icon={<EnvironmentOutlined />}
                   onClick={openInYandexMaps}
                 >
-                  Open in Yandex Maps
+                  Open in Google Maps
                 </Button>
               </div>
             </div>
