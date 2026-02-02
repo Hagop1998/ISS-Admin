@@ -308,7 +308,22 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {/* Subscription Management - Only for SuperAdmin */}
           {isSuperAdmin && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-1">
+              <button
+                className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                  isActive('/subscriptions/list')
+                    ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                    : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                }`}
+                onClick={() => handleNavigation('/subscriptions/list')}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  <span>Subscription Plans</span>
+                </div>
+              </button>
               <button
                 className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
                   isActive('/subscriptions/create')
@@ -321,7 +336,22 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Create User Subscription</span>
+                  <span>Assign to User</span>
+                </div>
+              </button>
+              <button
+                className={`w-full flex items-center justify-between px-3 py-2 rounded border transition ${
+                  isActive('/subscriptions/create-plan')
+                    ? 'bg-primary-500/25 border-primary-300/40 text-primary-100'
+                    : 'border-white/10 bg-white/5 text-gray-100 hover:bg-primary-500/20 hover:border-primary-400/40'
+                }`}
+                onClick={() => handleNavigation('/subscriptions/create-plan')}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Create Plan</span>
                 </div>
               </button>
             </div>

@@ -113,8 +113,6 @@ const AddressesList = () => {
         managerId: values.managerId && values.managerId !== 0 ? Number(values.managerId) : null,
       };
       
-      // Log for debugging
-      console.log('Creating address with data:', addressData);
       
       await dispatch(createAddress(addressData)).unwrap();
       message.success('Address created successfully');
@@ -200,7 +198,6 @@ const AddressesList = () => {
         return;
       }
       
-      console.log('Updating address:', { id: addressId, changedFields });
       await dispatch(updateAddress({ id: addressId, addressData: changedFields })).unwrap();
       message.success('Address updated successfully');
       setIsEditModalOpen(false);

@@ -163,7 +163,6 @@ const AddAddressModal = ({ open, onCancel, onSubmit, mode = 'add', initialValues
         if (isNaN(long)) long = null;
       }
       
-      // Prepare submit data
       const submitData = {
         address: values.address || '',
         city: values.city || '',
@@ -172,8 +171,7 @@ const AddAddressModal = ({ open, onCancel, onSubmit, mode = 'add', initialValues
         managerId: values.managerId ? Number(values.managerId) : null,
       };
       
-      // Log for debugging
-      console.log('Submitting address data:', submitData);
+  
       
       onSubmit(submitData);
     } catch (error) {

@@ -151,11 +151,9 @@ const VideosList = () => {
         return;
       }
       
-      console.log('Deleting video with full URL:', videoUrl);
-      console.log('Full video record:', record);
+  
       
       const response = await mediaService.deleteVideo(videoUrl);
-      console.log('Delete response:', response);
       
       message.success('Video deleted successfully');
       

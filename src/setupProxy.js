@@ -10,7 +10,6 @@ module.exports = function (app) {
     return;
   }
 
-  console.log(`[setupProxy] Configuring proxy: /api/* -> ${target}/*`);
 
   app.use(
     '/api',
@@ -23,7 +22,6 @@ module.exports = function (app) {
       },
       logLevel: 'debug',
       onProxyReq: (proxyReq, req, res) => {
-        console.log(`[Proxy] ${req.method} ${req.url} -> ${target}${req.url.replace('/api', '')}`);
         proxyReq.setHeader('origin', target);
       },
       onError: (err, req, res) => {

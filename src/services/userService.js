@@ -48,6 +48,34 @@ export const userService = {
     return response.json();
   },
 
+  async getUserById(userId) {
+    const url = `${API_BASE_PATH}/users/${userId}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      }
+      if (response.status === 404) {
+        throw new Error('User not found');
+      }
+      let errorMessage = 'Failed to fetch user';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (error) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+
   async getUsersByAddress(addressId, params = {}) {
     const { page = 1, limit = 10 } = params;
     

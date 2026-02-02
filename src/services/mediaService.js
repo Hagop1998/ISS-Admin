@@ -153,8 +153,7 @@ export const mediaService = {
   async deleteVideo(videoUrl) {
     const url = `${API_BASE_PATH}/medias/upload?file=${encodeURIComponent(videoUrl)}`;
     
-    console.log('Delete video request URL:', url);
-    console.log('Delete video full URL:', videoUrl);
+
 
     const response = await fetch(url, {
       method: 'DELETE',
@@ -162,17 +161,11 @@ export const mediaService = {
       credentials: 'include',
     });
 
-    console.log('Delete video response status:', response.status);
-    console.log('Delete video response ok:', response.ok);
-
-    // Even if status is 200, check the response body for success message
     let responseData = null;
     try {
       const responseText = await response.text();
-      console.log('Delete video response text:', responseText);
       if (responseText) {
         responseData = JSON.parse(responseText);
-        console.log('Delete video response data:', responseData);
       }
     } catch (error) {
       console.error('Failed to parse delete response:', error);

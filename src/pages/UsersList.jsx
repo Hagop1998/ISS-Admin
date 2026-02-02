@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Typography, Breadcrumb, Popconfirm, Tooltip, Table, Input, Select, Badge, Alert, App } from 'antd';
-import { HomeOutlined, DeleteOutlined, UserOutlined, SearchOutlined, CheckCircleOutlined, BellOutlined, PlusOutlined } from '@ant-design/icons';
+import { HomeOutlined, DeleteOutlined, UserOutlined, SearchOutlined, CheckCircleOutlined, BellOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { fetchUsers, deleteUser, verifyUser, createUser, setSearch, setRole, setPage, setLimit } from '../store/slices/userSlice';
 import { userService } from '../services/userService';
 import { createUserSubscription } from '../store/slices/subscriptionSlice';
@@ -10,6 +10,7 @@ import { fetchDevices, fetchChips, updateChip, setICCard } from '../store/slices
 import { ChipCardOperationEnum } from '../constants/enums';
 import AddUserModal from '../components/Users/AddUserModal';
 import SelectAddressModal from '../components/Users/SelectAddressModal';
+import UserDetailsModal from '../components/Users/UserDetailsModal';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -27,6 +28,8 @@ const UsersList = () => {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isSelectAddressModalOpen, setIsSelectAddressModalOpen] = useState(false);
   const [userToVerify, setUserToVerify] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isUserDetailsModalOpen, setIsUserDetailsModalOpen] = useState(false);
   const lastFetchedRef = useRef({ page: null, limit: null, search: null, role: null });
 
   // Sync search value with filter state
@@ -120,7 +123,6 @@ const UsersList = () => {
   };
 
   const handleVerifyAndCreateSubscription = async (formValues) => {
-    console.log('handleVerifyAndCreateSubscription called with:', formValues);
     if (!userToVerify) {
       console.error('No user to verify');
       return;
@@ -134,7 +136,7 @@ const UsersList = () => {
       const shouldAssignChip = formValues.assignChip;
       const chipId = formValues.chipId;
 
-      console.log('User ID:', userId, 'Address ID:', addressId);
+
 
       if (!userId) {
         message.error('User ID is missing');
@@ -146,10 +148,7 @@ const UsersList = () => {
         return;
       }
 
-      // First verify the user
-      console.log('Verifying user:', userId);
       await dispatch(verifyUser(userId)).unwrap();
-      console.log('User verified successfully');
 
       if (hasSubscription === true && subscriptionId) {
         let devicesList = devices || [];
@@ -381,8 +380,20 @@ const UsersList = () => {
       fixed: 'right',
       render: (_, record) => {
         const isVerified = record.isVerified === true;
+        const userId = record.id ?? record._id;
         return (
           <Space size="small">
+            <Tooltip title="View user details (GET users/:id)">
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
+                size="small"
+                onClick={() => {
+                  setSelectedUserId(userId);
+                  setIsUserDetailsModalOpen(true);
+                }}
+              />
+            </Tooltip>
             {!isVerified && (
               <Tooltip title="Accept & Verify User">
                 <Button
@@ -554,6 +565,31 @@ const UsersList = () => {
         }}
         onSubmit={handleVerifyAndCreateSubscription}
         user={userToVerify}
+      />
+
+      <UserDetailsModal
+        open={isUserDetailsModalOpen}
+        onCancel={() => {
+          setIsUserDetailsModalOpen(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId}
+        onUserDeleted={() => {
+          dispatch(fetchUsers({
+            page: pagination.page,
+            limit: pagination.limit,
+            search: filters.search,
+            role: filters.role,
+          }));
+        }}
+        onUserUpdated={() => {
+          dispatch(fetchUsers({
+            page: pagination.page,
+            limit: pagination.limit,
+            search: filters.search,
+            role: filters.role,
+          }));
+        }}
       />
     </div>
   );

@@ -109,7 +109,6 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
         chipId: assignChip === 'yes' ? form.getFieldValue('chipId') : null,
       };
       
-      console.log('Submitting verification with values:', formValues);
       await onSubmit(formValues);
       
       // Reset modal state after successful submission

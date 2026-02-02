@@ -346,12 +346,7 @@ const CustomSettings = () => {
       });
       
       completeSettings[String(type)] = convertValueToProperType(type, value);
-      
-      console.log('Sending complete settings object:', completeSettings);
-      console.log('All enum values:', allEnumValues);
-      console.log('Type being updated:', type, 'Value:', value);
-      console.log('Device ID:', actualDeviceId);
-      console.log('Local ID:', localId);
+  
   
       let setDoorValue = value;
       if (isSwitchType(type)) {

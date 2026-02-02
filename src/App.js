@@ -6,6 +6,7 @@ import Layout from './components/Layout/Layout';
 import AccessControlList from './pages/AccessControlList';
 import UsersFaceList from './pages/UsersFaceList';
 import UsersList from './pages/UsersList';
+import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import AddressesList from './pages/AddressesList';
 import CommunityOverview from './pages/CommunityOverview';
@@ -19,6 +20,8 @@ import DoorOpeningRecord from './pages/DoorOpeningRecord';
 import DoorConfiguration from './pages/DoorConfiguration';
 import CustomSettings from './pages/CustomSettings';
 import CreateSubscription from './pages/CreateSubscription';
+import CreateSubscriptionPlan from './pages/CreateSubscriptionPlan';
+import SubscriptionPlansList from './pages/SubscriptionPlansList';
 import VideoUpload from './pages/VideoUpload';
 import VideosList from './pages/VideosList';
 import AnnouncementsList from './pages/AnnouncementsList';
@@ -83,9 +86,12 @@ function App() {
               <Route path="/device-manager/device-config" element={<DeviceConfig />} />
               <Route path="/user-management" element={<UserManagement />} />
               <Route path="/users" element={<UsersList />} />
+              <Route path="/users/:id" element={<UserDetail />} />
               <Route path="/user-settings/personal-data" element={<PersonalData />} />
               <Route path="/user-settings/change-password" element={<ChangePassword />} />
               <Route path="/subscriptions/create" element={<CreateSubscription />} />
+              <Route path="/subscriptions/create-plan" element={<CreateSubscriptionPlan />} />
+              <Route path="/subscriptions/list" element={<SubscriptionPlansList />} />
               <Route path="/media/upload-video" element={<VideoUpload />} />
               <Route path="/media/videos" element={<VideosList />} />
               <Route path="/announcements" element={<AnnouncementsList />} />
