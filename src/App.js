@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { ConfigProvider, App as AntdApp } from 'antd';
+import ruRU from 'antd/locale/ru_RU';
 import Layout from './components/Layout/Layout';
 import AccessControlList from './pages/AccessControlList';
 import UsersFaceList from './pages/UsersFaceList';
@@ -52,8 +54,12 @@ const PublicRoute = ({ children }) => {
 };
 
 function App() {
+  const { i18n } = useTranslation();
+  const antdLocale = i18n.language?.startsWith('ru') ? ruRU : undefined;
+
   return (
     <ConfigProvider
+      locale={antdLocale}
       theme={{
         token: {
           colorPrimary: '#3C0056',

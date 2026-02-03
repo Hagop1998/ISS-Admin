@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Image } from 'antd';
@@ -8,6 +9,7 @@ import { mediaService } from '../services/mediaService';
 const { Title } = Typography;
 
 const UsersFaceList = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
   const [medias, setMedias] = useState([]);
@@ -82,9 +84,9 @@ const UsersFaceList = () => {
       } catch (error) {
         console.error('Failed to fetch medias:', error);
         if (error.message && error.message.includes('Unauthorized')) {
-          message.error('Your session has expired. Please login again.');
+          message.error(t('pages.usersFaceList.msgSessionExpired'));
         } else {
-          message.error('Failed to fetch face list');
+          message.error(t('pages.usersFaceList.msgFailedFetch'));
         }
       } finally {
         setLoading(false);
@@ -133,7 +135,7 @@ const UsersFaceList = () => {
   const handleDelete = async (record) => {
     try {
       // TODO: Implement delete media endpoint if available
-      message.success('Face record deleted successfully');
+      message.success(t('pages.usersFaceList.msgDeleted'));
       // Refresh the list
       const response = await mediaService.getMedias({
         page: pagination.current,
@@ -143,7 +145,7 @@ const UsersFaceList = () => {
       const mediasData = response?.results || response?.data || (Array.isArray(response) ? response : []);
       setMedias(mediasData);
     } catch (error) {
-      message.error(error || 'Failed to delete face record');
+      message.error(error || t('pages.usersFaceList.msgFailedDelete'));
     }
   };
 
@@ -155,7 +157,7 @@ const UsersFaceList = () => {
 
   const columns = [
     {
-      title: 'No.',
+      title: t('pages.usersFaceList.colNo'),
       key: 'index',
       width: 60,
       render: (_, record, index) => {
@@ -163,7 +165,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'User Name',
+      title: t('pages.usersFaceList.colUserName'),
       key: 'userName',
       width: 150,
       ellipsis: true,
@@ -176,7 +178,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'Last Name',
+      title: t('pages.usersFaceList.colLastName'),
       key: 'lastName',
       width: 120,
       ellipsis: true,
@@ -186,7 +188,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'Face ID',
+      title: t('pages.usersFaceList.colFaceId'),
       key: 'faceId',
       width: 140,
       ellipsis: true,
@@ -195,7 +197,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'Entry Time',
+      title: t('pages.usersFaceList.colEntryTime'),
       dataIndex: 'createdAt',
       key: 'entryTime',
       width: 150,
@@ -212,7 +214,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'Entity Type',
+      title: t('pages.usersFaceList.colEntityType'),
       key: 'entityType',
       width: 120,
       ellipsis: true,
@@ -221,7 +223,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'Face',
+      title: t('pages.usersFaceList.colFace'),
       key: 'face',
       width: 60,
       render: (_, record) => {
@@ -233,10 +235,10 @@ const UsersFaceList = () => {
               width={40}
               height={40}
               src={imageUrl}
-              alt="Face"
+              alt={t('pages.usersFaceList.colFace')}
               style={{ borderRadius: 4, objectFit: 'cover' }}
               preview={{
-                mask: <div>Preview</div>,
+                mask: <div>{t('pages.usersFaceList.preview')}</div>,
               }}
               fallback={
                 <div style={{ width: 40, height: 40, borderRadius: 4, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -256,7 +258,7 @@ const UsersFaceList = () => {
       },
     },
     {
-      title: 'Operation',
+      title: t('pages.usersFaceList.colOperation'),
       key: 'operation',
       width: 130,
       fixed: 'right',
@@ -268,14 +270,14 @@ const UsersFaceList = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            Edit
+            {t('pages.usersFaceList.edit')}
           </Button>
           <Popconfirm
-            title="Delete this face record?"
-            description="Are you sure you want to delete this entry?"
+            title={t('pages.usersFaceList.deleteConfirmTitle')}
+            description={t('pages.usersFaceList.deleteConfirmDesc')}
             onConfirm={() => handleDelete(record)}
-            okText="Yes"
-            cancelText="No"
+            okText={t('common.yes')}
+            cancelText={t('common.no')}
           >
             <Button
               danger
@@ -293,24 +295,16 @@ const UsersFaceList = () => {
       {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Access Control Mgt',
-          },
-          {
-            title: 'Users Face List',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.usersFaceList.breadcrumbReports') },
+          { title: t('pages.usersFaceList.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0 }}>
-          Users Face List
+          {t('pages.usersFaceList.title')}
         </Title>
         <Space>
           
@@ -342,14 +336,14 @@ const UsersFaceList = () => {
                 }
               } catch (error) {
                 console.error('Failed to refresh medias:', error);
-                message.error('Failed to refresh face list');
+                message.error(t('pages.usersFaceList.msgFailedFetch'));
               } finally {
                 setLoading(false);
               }
             }}
             loading={loading}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
         </Space>
       </div>
@@ -370,11 +364,12 @@ const UsersFaceList = () => {
             total: pagination.total,
             showSizeChanger: true,
             showTotal: (total, range) =>
-              `Showing ${range[0]} to ${range[1]} of ${total} entries`,
+              t('common.showingEntries', { from: range[0], to: range[1], total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           onChange={handleTableChange}
           scroll={{ x: 1000 }}
+          locale={{ emptyText: t('pages.usersFaceList.noData') }}
         />
       </div>
     </div>

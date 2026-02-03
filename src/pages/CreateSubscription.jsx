@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Form, Select, Button, Card, Typography, Breadcrumb, message, Space, Spin } from 'antd';
@@ -12,11 +13,11 @@ import { userService } from '../services/userService';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// Module-level guards so Strict Mode double-mount doesn't trigger duplicate API calls
 const createSubFetchGuard = { users: false, devices: false, plans: false };
 const RESET_GUARD_DELAY_MS = 150;
 
 const CreateSubscription = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [form] = Form.useForm();
@@ -40,7 +41,7 @@ const CreateSubscription = () => {
     }
 
     if (user?.role !== 'superAdmin') {
-      message.error('Access denied. Only super admins can create subscriptions.');
+      message.error(t('pages.createSubscription.msgAccessDenied'));
       navigate('/access-control/list', { replace: true });
     }
   }, [token, user, navigate]);
@@ -76,7 +77,7 @@ const CreateSubscription = () => {
         const list = response?.results ?? response?.data ?? (Array.isArray(response) ? response : []);
         setPlans(list);
       } catch (error) {
-        message.error(error?.message || 'Failed to load subscription plans');
+        message.error(error?.message || t('pages.createSubscription.msgFailedLoadPlans'));
       } finally {
         setPlansLoading(false);
       }
@@ -126,19 +127,19 @@ const CreateSubscription = () => {
           id: existingUserSubscriptionId,
           subscriptionData: { subscriptionId, deviceId },
         })).unwrap();
-        message.success('Subscription updated successfully');
+        message.success(t('pages.createSubscription.msgUpdated'));
       } else {
         await dispatch(createUserSubscription({
           userId,
           subscriptionId,
           deviceId,
         })).unwrap();
-        message.success('Subscription created successfully');
+        message.success(t('pages.createSubscription.msgCreated'));
       }
       form.resetFields();
       setExistingUserSubscriptionId(null);
     } catch (error) {
-      message.error(error || (existingUserSubscriptionId ? 'Failed to update subscription' : 'Failed to create subscription'));
+      message.error(error || (existingUserSubscriptionId ? t('pages.createSubscription.msgFailedUpdate') : t('pages.createSubscription.msgFailedCreate')));
     } finally {
       setLoading(false);
     }
@@ -159,18 +160,18 @@ const CreateSubscription = () => {
       <Breadcrumb
         items={[
           { href: '/', title: <HomeOutlined /> },
-          { title: 'Subscription Management' },
-          { title: 'Create Subscription' },
+          { title: t('pages.createSubscription.breadcrumbMgt') },
+          { title: t('pages.createSubscription.breadcrumbCreate') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
       <div className="mb-6">
         <Title level={2} style={{ margin: 0 }}>
-          Assign subscription to user
+          {t('pages.createSubscription.title')}
         </Title>
         <Text type="secondary" style={{ display: 'block', marginTop: 4 }}>
-          Give a plan to a user who doesn&apos;t have one, or change their current subscription to another plan.
+          {t('pages.createSubscription.subtitle')}
         </Text>
       </div>
 
@@ -185,16 +186,16 @@ const CreateSubscription = () => {
           >
             <Form.Item
               name="userId"
-              label="User"
+              label={t('pages.createSubscription.user')}
               extra={existingUserSubscriptionId && (
                 <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  This user already has a subscription. Saving will update their subscription.
+                  {t('pages.createSubscription.userExtra')}
                 </Typography.Text>
               )}
-              rules={[{ required: true, message: 'Please select a user' }]}
+              rules={[{ required: true, message: t('pages.createSubscription.userRequired') }]}
             >
               <Select
-                placeholder="Search and select a user"
+                placeholder={t('pages.createSubscription.userPlaceholder')}
                 showSearch
                 optionFilterProp="children"
                 filterOption={(input, option) => {
@@ -205,7 +206,7 @@ const CreateSubscription = () => {
                   return `${name} ${email}`.toLowerCase().includes(input.toLowerCase());
                 }}
                 loading={usersLoading || loadingUserSubscription}
-                notFoundContent={usersLoading || loadingUserSubscription ? <Spin size="small" /> : 'No users found'}
+                notFoundContent={usersLoading || loadingUserSubscription ? <Spin size="small" /> : t('pages.createSubscription.noUsersFound')}
                 style={{ width: '100%' }}
               >
                 {usersList.length > 0 ? (
@@ -219,22 +220,22 @@ const CreateSubscription = () => {
                     );
                   })
                 ) : (
-                  <Option disabled value="no-users">No users available</Option>
+                  <Option disabled value="no-users">{t('pages.createSubscription.noUsersAvailable')}</Option>
                 )}
               </Select>
             </Form.Item>
 
             <Form.Item
               name="subscriptionId"
-              label="Subscription plan"
-              rules={[{ required: true, message: 'Please select a subscription plan' }]}
+              label={t('pages.createSubscription.subscriptionPlan')}
+              rules={[{ required: true, message: t('pages.createSubscription.planRequired') }]}
             >
               <Select
-                placeholder="Select plan (assign or change for this user)"
+                placeholder={t('pages.createSubscription.planPlaceholder')}
                 showSearch
                 optionFilterProp="label"
                 loading={plansLoading}
-                notFoundContent={plansLoading ? <Spin size="small" /> : 'No plans found. Create a plan first.'}
+                notFoundContent={plansLoading ? <Spin size="small" /> : t('pages.createSubscription.noPlansFound')}
               >
                 {plans.map((plan) => {
                   const id = plan.id ?? plan._id;
@@ -253,11 +254,11 @@ const CreateSubscription = () => {
 
             <Form.Item
               name="deviceId"
-              label="Device"
-              rules={[{ required: true, message: 'Please select a device' }]}
+              label={t('pages.createSubscription.device')}
+              rules={[{ required: true, message: t('pages.createSubscription.deviceRequired') }]}
             >
               <Select
-                placeholder="Search and select a device"
+                placeholder={t('pages.createSubscription.devicePlaceholder')}
                 showSearch
                 optionFilterProp="children"
                 filterOption={(input, option) => {
@@ -267,7 +268,7 @@ const CreateSubscription = () => {
                   return text.includes(input.toLowerCase());
                 }}
                 loading={devicesLoading}
-                notFoundContent={devicesLoading ? <Spin size="small" /> : 'No devices found'}
+                notFoundContent={devicesLoading ? <Spin size="small" /> : t('pages.createSubscription.noDevicesFound')}
                 style={{ width: '100%' }}
               >
                 {devicesList.length > 0 ? (
@@ -295,10 +296,10 @@ const CreateSubscription = () => {
                   loading={loading || subscriptionLoading}
                   size="large"
                 >
-                  {existingUserSubscriptionId ? 'Update subscription' : 'Create subscription'}
+                  {existingUserSubscriptionId ? t('pages.createSubscription.updateSubscription') : t('pages.createSubscription.createSubscription')}
                 </Button>
-                <Button onClick={() => form.resetFields()} size="large">Reset</Button>
-                <Button onClick={() => navigate(-1)} size="large">Cancel</Button>
+                <Button onClick={() => form.resetFields()} size="large">{t('pages.createSubscription.reset')}</Button>
+                <Button onClick={() => navigate(-1)} size="large">{t('pages.createSubscription.cancel')}</Button>
               </Space>
             </Form.Item>
           </Form>

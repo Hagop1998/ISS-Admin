@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '../hooks/useDebounce';
@@ -14,6 +15,7 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const CardSettings = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { chips, chipsLoading, chipsPagination } = useSelector((state) => state.devices);
@@ -180,7 +182,7 @@ const CardSettings = () => {
   const handleCreateChip = async (values) => {
     try {
       if (!selectedAddressDeviceId || !selectedAddressDeviceLocalId) {
-        message.error('Please select an address with a device');
+        message.error(t('pages.cardSettingsModals.noAddressWithDevice'));
         return;
       }
 
@@ -198,7 +200,7 @@ const CardSettings = () => {
       }
 
       await dispatch(createChip(chipPayload)).unwrap();
-      message.success('Chip created successfully');
+      message.success(t('pages.cardSettingsModals.msgChipCreated'));
 
       try {
         const icCardPayload = {
@@ -207,9 +209,9 @@ const CardSettings = () => {
           cardSN: values.serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
-        message.success('IC card set successfully');
+        message.success(t('pages.cardSettingsModals.msgICCardSet'));
       } catch (icCardError) {
-        message.warning(icCardError.message || 'Chip created but failed to set IC card');
+        message.warning(icCardError.message || t('pages.cardSettingsModals.msgChipCreatedICFailed'));
       }
 
       setIsCreateChipModalOpen(false);
@@ -219,7 +221,7 @@ const CardSettings = () => {
       setSelectedUserId(null);
       dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
     } catch (error) {
-      message.error(error.message || error || 'Failed to create chip');
+      message.error(error.message || error || t('pages.cardSettingsModals.msgFailedCreateChip'));
     }
   };
 
@@ -233,7 +235,7 @@ const CardSettings = () => {
       setSelectedAddressDeviceId(null);
       setSelectedAddressDeviceLocalId(null);
       createChipForm.setFieldsValue({ deviceId: undefined });
-      message.warning('Selected address does not have a device');
+      message.warning(t('pages.cardSettingsModals.noAddressWithDevice'));
     }
   };
 
@@ -253,14 +255,14 @@ const CardSettings = () => {
           cardSN: serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
-        message.success('Chip blocked successfully');
+        message.success(t('pages.cardSettingsModals.msgChipBlocked'));
       } catch (icCardError) {
-        message.warning('Chip status updated but failed to set IC card');
+        message.warning(t('pages.cardSettingsModals.msgChipStatusUpdatedICFailed'));
       }
 
       dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
     } catch (error) {
-      message.error(error.message || error || 'Failed to block chip');
+      message.error(error.message || error || t('pages.cardSettingsModals.msgFailedBlockChip'));
     }
   };
 
@@ -282,14 +284,14 @@ const CardSettings = () => {
           cardSN: serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
-        message.success('Chip unblocked successfully');
+        message.success(t('pages.cardSettingsModals.msgChipUnblocked'));
       } catch (icCardError) {
-        message.warning('Chip status updated but failed to set IC card');
+        message.warning(t('pages.cardSettingsModals.msgChipStatusUpdatedICFailed'));
       }
 
       dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
     } catch (error) {
-      message.error(error.message || error || 'Failed to unblock chip');
+      message.error(error.message || error || t('pages.cardSettingsModals.msgFailedUnblockChip'));
     }
   };
 
@@ -301,7 +303,7 @@ const CardSettings = () => {
 
   const handleAssignChipSubmit = async (values) => {
     if (!assigningChip || !values.userId) {
-      message.error('Please select a user');
+      message.error(t('pages.cardSettingsModals.pleaseSelectUser'));
       return;
     }
 
@@ -310,7 +312,7 @@ const CardSettings = () => {
       const deviceLocalId = assigningChip.device?.localId;
 
       if (!deviceLocalId) {
-        message.error('Device local ID not found');
+        message.error(t('pages.cardSettingsModals.msgChipIdMissing'));
         return;
       }
 
@@ -331,9 +333,9 @@ const CardSettings = () => {
           cardSN: assigningChip.serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
-        message.success('Chip assigned to user successfully');
+        message.success(t('pages.cardSettingsModals.msgChipAssigned'));
       } catch (icCardError) {
-        message.warning('Chip assigned but failed to set IC card');
+        message.warning(t('pages.cardSettingsModals.msgChipAssignedICFailed'));
       }
 
       setIsAssignChipModalOpen(false);
@@ -341,14 +343,14 @@ const CardSettings = () => {
       assignChipForm.resetFields();
       dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
     } catch (error) {
-      message.error(error.message || error || 'Failed to assign chip');
+      message.error(error.message || error || t('pages.cardSettingsModals.msgFailedAssignChip'));
     }
   };
 
   const handleViewChipDetails = async (chip) => {
     const chipId = chip.id || chip._id;
     if (!chipId) {
-      message.error('Chip ID is missing');
+      message.error(t('pages.cardSettingsModals.msgChipIdMissing'));
       return;
     }
 
@@ -361,7 +363,7 @@ const CardSettings = () => {
       const chipData = data?.data || data?.chip || data;
       setChipDetails(chipData);
     } catch (error) {
-      message.error(error?.message || 'Failed to fetch chip details');
+      message.error(error?.message || t('pages.cardSettingsModals.msgFailedFetchChipDetails'));
       setIsChipDetailsModalOpen(false);
     } finally {
       setChipDetailsLoading(false);
@@ -386,14 +388,14 @@ const CardSettings = () => {
           cardSN: serialNumber,
         };
         await dispatch(setICCard(icCardPayload)).unwrap();
-        message.success('Chip unassigned successfully');
+        message.success(t('pages.cardSettingsModals.msgChipUnassigned'));
       } catch (icCardError) {
-        message.warning('Chip status updated but failed to set IC card');
+        message.warning(t('pages.cardSettingsModals.msgChipStatusUpdatedICFailed'));
       }
 
       dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
     } catch (error) {
-      message.error(error.message || error || 'Failed to unassign chip');
+      message.error(error.message || error || t('pages.cardSettingsModals.msgFailedUnassignChip'));
     }
   };
 
@@ -405,19 +407,19 @@ const CardSettings = () => {
         cardSN: String(values.cardSN),
       };
       await dispatch(setICCard(payload)).unwrap();
-      message.success('IC card set successfully');
+      message.success(t('pages.cardSettingsModals.msgICCardSet'));
 
       const selectedChip = chips?.find(chip => chip.device?.localId === values.localId);
       const deviceId = selectedChip?.device?.id || selectedChip?.device?._id;
       
       if (!deviceId) {
-        message.error('Device not found. Please ensure the device is associated with a chip.');
+        message.error(t('pages.cardSettingsModals.msgFailedFetchChipDetails'));
         return;
       }
       const userId = Number(values.userId);
 
       if (!deviceId || !userId) {
-        message.error('Device ID or User ID is missing');
+        message.error(t('pages.cardSettingsModals.msgChipIdMissing'));
         return;
       }
 
@@ -430,17 +432,17 @@ const CardSettings = () => {
       };
 
       await dispatch(createChip(chipPayload)).unwrap();
-      message.success('Chip created successfully');
+      message.success(t('pages.cardSettingsModals.msgChipCreated'));
       icCardForm.resetFields();
       dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }));
     } catch (error) {
-      message.error(error.message || error || 'Failed to set IC card');
+      message.error(error.message || error || t('pages.cardSettingsModals.msgChipCreatedICFailed'));
     }
   };
 
   const chipColumns = [
     {
-      title: 'Serial Number',
+      title: t('pages.cardSettings.colSerialNumber'),
       dataIndex: 'serialNumber',
       key: 'serialNumber',
       render: (text, record) => (
@@ -454,7 +456,7 @@ const CardSettings = () => {
       ),
     },
     {
-      title: 'Address',
+      title: t('pages.cardSettings.colAddress'),
       key: 'address',
       render: (_, record) => {
         const address = record.device?.address?.address || 
@@ -465,7 +467,7 @@ const CardSettings = () => {
       },
     },
     {
-      title: 'Device Local ID',
+      title: t('pages.userDetailsModal.localId'),
       key: 'deviceLocalId',
       render: (_, record) => {
         const localId = record.device?.localId || '-';
@@ -473,13 +475,13 @@ const CardSettings = () => {
       },
     },
     {
-      title: 'Chip Type',
+      title: t('pages.cardSettingsModals.chipType'),
       dataIndex: 'chipType',
       key: 'chipType',
       render: (text) => <Tag>{text || '-'}</Tag>,
     },
     {
-      title: 'Status',
+      title: t('pages.cardSettings.colStatus'),
       dataIndex: 'chipStatus',
       key: 'chipStatus',
       render: (status) => {
@@ -496,13 +498,13 @@ const CardSettings = () => {
       },
     },
     {
-      title: 'Assigned At',
+      title: t('pages.userDetailsModal.assignedAt'),
       dataIndex: 'assignedAt',
       key: 'assignedAt',
       render: (date) => (date ? new Date(date).toLocaleString() : '-'),
     },
     {
-      title: 'Actions',
+      title: t('pages.cardSettings.colActions'),
       key: 'actions',
       width: 100,
       render: (_, record) => {
@@ -520,15 +522,15 @@ const CardSettings = () => {
                 size="small"
                 onClick={() => handleAssignChip(record)}
               >
-                Assign
+                {t('pages.cardSettings.assign')}
               </Button>
             )}
             {(chipStatusLower === 'active' || record.chipStatus === 'Active') && (
               <Popconfirm
-                title="Are you sure you want to unassign this chip from the user?"
+                title={t('pages.cardSettingsModals.msgChipUnassigned')}
                 onConfirm={() => handleUnassignChip(chipId, record.serialNumber, deviceLocalId, record)}
-                okText="Yes"
-                cancelText="No"
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
                 disabled={!deviceLocalId}
               >
                 <Button
@@ -537,18 +539,18 @@ const CardSettings = () => {
                   size="small"
                   style={{ color: '#ff9800' }}
                   disabled={!deviceLocalId}
-                  title={!deviceLocalId ? 'Device local ID not found' : ''}
+                  title={!deviceLocalId ? t('pages.cardSettingsModals.msgChipIdMissing') : ''}
                 >
-                  Unassign
+                  {t('pages.cardSettings.unassign')}
                 </Button>
               </Popconfirm>
             )}
             {chipStatusLower !== 'blocked' && deviceLocalId && (
               <Popconfirm
-                title="Are you sure you want to block this chip?"
+                title={t('pages.cardSettings.block')}
                 onConfirm={() => handleBlockChip(chipId, record.serialNumber, deviceLocalId)}
-                okText="Yes"
-                cancelText="No"
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
               >
                 <Button
                   type="link"
@@ -556,16 +558,16 @@ const CardSettings = () => {
                   icon={<StopOutlined />}
                   size="small"
                 >
-                  Block
+                  {t('pages.cardSettings.block')}
                 </Button>
               </Popconfirm>
             )}
             {chipStatusLower === 'blocked' && deviceLocalId && (
               <Popconfirm
-                title="Are you sure you want to unblock this chip?"
+                title={t('pages.cardSettingsModals.msgChipUnblocked')}
                 onConfirm={() => handleUnblockChip(chipId, record.serialNumber, deviceLocalId, record.userId)}
-                okText="Yes"
-                cancelText="No"
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
               >
                 <Button
                   type="link"
@@ -573,7 +575,7 @@ const CardSettings = () => {
                   size="small"
                   style={{ color: '#52c41a' }}
                 >
-                  Unblock
+                  {t('pages.cardSettings.unblock')}
                 </Button>
               </Popconfirm>
             )}
@@ -588,31 +590,23 @@ const CardSettings = () => {
       {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Device Manager',
-          },
-          {
-            title: 'Card Settings',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.cardSettings.breadcrumbMgt') },
+          { title: t('pages.cardSettings.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600, color: '#3C0056' }}>
-          Card Settings
+          {t('pages.cardSettings.title')}
         </Title>
         <Space>
           <Button
             icon={<ReloadOutlined />}
             onClick={() => dispatch(fetchChips({ page: pagination.current, limit: pagination.pageSize }))}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button
             type="primary"
@@ -620,14 +614,13 @@ const CardSettings = () => {
             onClick={() => setIsCreateChipModalOpen(true)}
             style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
           >
-            Create Chip
+            {t('pages.cardSettings.createChip')}
           </Button>
         </Space>
       </div>
 
-      {/* Chips Table */}
-          <Card
-        title="Chips"
+      <Card
+        title={t('pages.cardSettings.title')}
         className="mb-6 shadow-md"
         styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
       >
@@ -641,7 +634,7 @@ const CardSettings = () => {
             pageSize: pagination.pageSize,
             total: chipsPagination?.totalItems || 0,
             showSizeChanger: true,
-            showTotal: (total) => `Total ${total} chips`,
+            showTotal: (total) => `${t('common.showingEntries', { from: 1, to: Math.min(pagination.pageSize, total), total })}`,
           }}
           onChange={handleTableChange}
         />
@@ -768,9 +761,8 @@ const CardSettings = () => {
             </Form>
       </Card> */}
 
-      {/* Create Chip Modal */}
       <Modal
-        title="Create Chip"
+        title={t('pages.cardSettingsModals.createChipTitle')}
         open={isCreateChipModalOpen}
         onCancel={() => {
           setIsCreateChipModalOpen(false);

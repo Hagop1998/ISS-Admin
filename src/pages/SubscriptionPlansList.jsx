@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,6 +21,7 @@ import { userService } from '../services/userService';
 const { Title, Text } = Typography;
 
 const SubscriptionPlansList = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
@@ -38,7 +40,7 @@ const SubscriptionPlansList = () => {
       return;
     }
     if (user?.role !== 'superAdmin') {
-      message.error('Access denied. Only super admins can view subscription plans.');
+      message.error(t('pages.subscriptionPlans.msgAccessDenied'));
       navigate('/access-control/list', { replace: true });
     }
   }, [token, user, navigate]);
@@ -51,7 +53,7 @@ const SubscriptionPlansList = () => {
       const list = response?.results ?? response?.data ?? (Array.isArray(response) ? response : []);
       setPlans(list);
     } catch (error) {
-      message.error(error?.message || 'Failed to fetch subscription plans');
+      message.error(error?.message || t('pages.subscriptionPlans.msgFailedLoadPlans'));
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,7 @@ const SubscriptionPlansList = () => {
       const plan = await subscriptionService.getSubscriptionPlanById(id);
       setSelectedPlan(plan);
     } catch (error) {
-      message.error(error?.message || 'Failed to load plan details');
+      message.error(error?.message || t('pages.subscriptionPlans.msgFailedLoadPlanDetails'));
       setDetailModalOpen(false);
     } finally {
       setDetailLoading(false);
@@ -120,33 +122,33 @@ const SubscriptionPlansList = () => {
 
   const columns = [
     {
-      title: 'No.',
+      title: t('pages.subscriptionPlans.colNo'),
       key: 'index',
       width: 70,
       render: (_, __, index) => index + 1,
     },
     {
-      title: 'Name',
+      title: t('pages.subscriptionPlans.colName'),
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
     },
     {
-      title: 'Description',
+      title: t('pages.subscriptionPlans.colDescription'),
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
       render: (text) => (text && text.length > 60 ? `${text.slice(0, 60)}...` : text),
     },
     {
-      title: 'Price (AMD)',
+      title: t('pages.subscriptionPlans.colPrice'),
       dataIndex: 'price',
       key: 'price',
       width: 120,
       render: (price) => (price != null ? `${Number(price).toLocaleString()} AMD` : '-'),
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -158,7 +160,7 @@ const SubscriptionPlansList = () => {
             handleRowClick(record);
           }}
         >
-          Details
+          {t('pages.subscriptionPlans.details')}
         </Button>
       ),
     },
@@ -173,22 +175,22 @@ const SubscriptionPlansList = () => {
       <Breadcrumb
         items={[
           { href: '/', title: <HomeOutlined /> },
-          { title: 'Subscription Management' },
-          { title: 'Subscription Plans' },
+          { title: t('pages.subscriptionPlans.breadcrumbMgt') },
+          { title: t('pages.subscriptionPlans.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0 }}>
-          Subscription Plans
+          {t('pages.subscriptionPlans.title')}
         </Title>
         <Space>
           <Button icon={<PlusOutlined />} onClick={() => navigate('/subscriptions/create-plan')}>
-            Create Plan
+            {t('pages.subscriptionPlans.createPlan')}
           </Button>
           <Button type="primary" onClick={() => navigate('/subscriptions/create')}>
-            Assign to User
+            {t('pages.subscriptionPlans.assignToUserBtn')}
           </Button>
         </Space>
       </div>
@@ -206,13 +208,13 @@ const SubscriptionPlansList = () => {
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} plans`,
+            showTotal: (total) => t('pages.subscriptionPlans.totalPlans', { total }),
           }}
         />
       </Card>
 
       <Modal
-        title={selectedPlan ? `Plan: ${selectedPlan.name}` : 'Plan details'}
+        title={selectedPlan ? t('pages.subscriptionPlans.planDetails', { name: selectedPlan.name }) : t('pages.subscriptionPlans.details')}
         open={detailModalOpen}
         onCancel={() => {
           setDetailModalOpen(false);
@@ -221,7 +223,7 @@ const SubscriptionPlansList = () => {
         }}
         footer={[
           <Button key="close" onClick={() => setDetailModalOpen(false)}>
-            Close
+            {t('pages.subscriptionPlans.close')}
           </Button>,
           <Button
             key="assign"
@@ -231,7 +233,7 @@ const SubscriptionPlansList = () => {
               navigate('/subscriptions/create');
             }}
           >
-            Assign to User
+            {t('pages.subscriptionPlans.assignToUserBtn')}
           </Button>,
         ]}
         width={560}
@@ -243,15 +245,15 @@ const SubscriptionPlansList = () => {
         ) : selectedPlan ? (
           <>
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Name">{selectedPlan.name}</Descriptions.Item>
-              <Descriptions.Item label="Price">
+              <Descriptions.Item label={t('pages.subscriptionPlans.colName')}>{selectedPlan.name}</Descriptions.Item>
+              <Descriptions.Item label={t('pages.subscriptionPlans.colPrice')}>
                 {selectedPlan.price != null ? `${Number(selectedPlan.price).toLocaleString()} AMD` : '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="Description">{selectedPlan.description || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('pages.subscriptionPlans.colDescription')}>{selectedPlan.description || '-'}</Descriptions.Item>
             </Descriptions>
 
             <Title level={5} style={{ marginTop: 16, marginBottom: 8 }}>
-              Users on this plan
+              {t('pages.subscriptionPlans.usersOnPlan')}
             </Title>
             {selectedPlan.userSubscriptions && selectedPlan.userSubscriptions.length > 0 ? (
               <Table
@@ -262,30 +264,30 @@ const SubscriptionPlansList = () => {
                 }))}
                 loading={userNamesLoading}
                 columns={[
-                  { title: 'User subscription ID', dataIndex: 'id', key: 'id', width: 140, render: (v, r) => r.id ?? r._id ?? '-' },
+                  { title: t('pages.subscriptionPlans.userSubId'), dataIndex: 'id', key: 'id', width: 140, render: (v, r) => r.id ?? r._id ?? '-' },
                   {
-                    title: 'User',
+                    title: t('common.user'),
                     key: 'user',
                     width: 180,
                     render: (_, record) => {
                       const uid = record.userId;
                       const names = userNamesMap[uid];
-                      if (userNamesLoading && !names) return <Text type="secondary">Loading...</Text>;
+                      if (userNamesLoading && !names) return <Text type="secondary">{t('common.loading')}</Text>;
                       if (names) {
                         const full = `${(names.firstName || '').trim()} ${(names.lastName || '').trim()}`.trim();
-                        return full || <Text type="secondary">User {uid}</Text>;
+                        return full || <Text type="secondary">{t('common.user')} {uid}</Text>;
                       }
-                      return <Text type="secondary">User {uid}</Text>;
+                      return <Text type="secondary">{t('common.user')} {uid}</Text>;
                     },
                   },
-                  { title: 'Device ID', dataIndex: 'deviceId', key: 'deviceId', width: 100 },
-                  { title: 'Status', dataIndex: 'status', key: 'status', render: (s) => (s ? <Text type="secondary">{s}</Text> : '-') },
+                  { title: t('pages.subscriptionPlans.deviceId'), dataIndex: 'deviceId', key: 'deviceId', width: 100 },
+                  { title: t('pages.subscriptionPlans.status'), dataIndex: 'status', key: 'status', render: (s) => (s ? <Text type="secondary">{s}</Text> : '-') },
                 ]}
                 pagination={false}
                 scroll={{ x: 400 }}
               />
             ) : (
-              <Text type="secondary">No users assigned to this plan.</Text>
+              <Text type="secondary">{t('pages.subscriptionPlans.noUsersOnPlan')}</Text>
             )}
           </>
         ) : null}

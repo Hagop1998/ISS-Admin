@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,6 +24,7 @@ const { TextArea } = Input;
 const PLAN_KEYS = ['Basic', 'Basic + Camera', 'Basic + Barrier', 'Basic + Camera + Barrier', 'Family & Friends'];
 
 const CreateSubscriptionPlan = () => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
@@ -35,7 +37,7 @@ const CreateSubscriptionPlan = () => {
       return;
     }
     if (user?.role !== 'superAdmin') {
-      message.error('Access denied. Only super admins can create subscription plans.');
+      message.error(t('pages.createSubscription.msgAccessDenied'));
       navigate('/access-control/list', { replace: true });
     }
   }, [token, user, navigate]);
@@ -63,10 +65,10 @@ const CreateSubscriptionPlan = () => {
         price: Number(values.price),
       };
       await subscriptionService.createSubscriptionPlan(payload);
-      message.success('Subscription plan created successfully');
+      message.success(t('pages.createPlan.msgCreated'));
       form.resetFields();
     } catch (error) {
-      message.error(error?.message || 'Failed to create subscription plan');
+      message.error(error?.message || t('pages.createPlan.msgFailedCreate'));
     } finally {
       setLoading(false);
     }
@@ -81,18 +83,18 @@ const CreateSubscriptionPlan = () => {
       <Breadcrumb
         items={[
           { href: '/', title: <HomeOutlined /> },
-          { title: 'Subscription Management' },
-          { title: 'Create Subscription Plan' },
+          { title: t('pages.createPlan.breadcrumbMgt') },
+          { title: t('pages.createPlan.breadcrumbCreate') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
       <div className="mb-6">
         <Title level={2} style={{ margin: 0 }}>
-          Create Subscription Plan
+          {t('pages.createPlan.title')}
         </Title>
         <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4 }}>
-          Select a preset below or enter custom plan details.
+          {t('pages.createPlan.planDetails')}
         </Typography.Text>
       </div>
 
@@ -105,11 +107,11 @@ const CreateSubscriptionPlan = () => {
         >
           <Form.Item
             name="planPreset"
-            label="Quick select plan"
-            help="Select a preset to fill name, description and price (you can edit after)."
+            label={t('pages.createPlan.quickSelect')}
+            help={t('pages.createPlan.planDetails')}
           >
             <Select
-              placeholder="Choose: Basic, Basic + Camera, Basic + Barrier, Basic + Camera + Barrier, or Family & Friends"
+              placeholder={t('pages.createPlan.quickSelect')}
               allowClear
               onChange={handlePlanSelect}
             >
@@ -123,27 +125,27 @@ const CreateSubscriptionPlan = () => {
 
           <Form.Item
             name="name"
-            label="Name"
-            rules={[{ required: true, message: 'Please enter plan name' }, { max: 100 }]}
+            label={t('pages.createPlan.planName')}
+            rules={[{ required: true, message: t('pages.createPlan.planName') }, { max: 100 }]}
           >
             <Input placeholder="e.g. Basic, Premium, Max" />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="Description"
-            rules={[{ required: true, message: 'Please enter description' }]}
+            label={t('pages.createPlan.description')}
+            rules={[{ required: true, message: t('pages.createPlan.description') }]}
           >
             <TextArea
               rows={4}
-              placeholder="e.g. Premium plan - 800 AMD. Or: Add camera +200 AMD, barrier +200 AMD."
+              placeholder="e.g. Premium plan - 800 AMD"
             />
           </Form.Item>
 
           <Form.Item
             name="price"
-            label="Price (AMD)"
-            rules={[{ required: true, message: 'Please enter price' }]}
+            label={t('pages.createPlan.price')}
+            rules={[{ required: true, message: t('pages.createPlan.price') }]}
           >
             <InputNumber min={0} step={1} style={{ width: '100%' }} placeholder="e.g. 800 or 0" />
           </Form.Item>
@@ -151,10 +153,10 @@ const CreateSubscriptionPlan = () => {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                Create Plan
+                {t('pages.createPlan.submit')}
               </Button>
-              <Button onClick={() => form.resetFields()}>Reset</Button>
-              <Button onClick={() => navigate(-1)}>Cancel</Button>
+              <Button onClick={() => form.resetFields()}>{t('common.reset')}</Button>
+              <Button onClick={() => navigate(-1)}>{t('common.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>

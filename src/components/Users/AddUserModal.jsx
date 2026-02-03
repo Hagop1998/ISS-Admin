@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Input, Button, Space } from 'antd';
 import { useSelector } from 'react-redux';
 
 const AddUserModal = ({ open, onCancel, onSubmit }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const { loading } = useSelector((state) => state.users);
 
@@ -28,7 +30,7 @@ const AddUserModal = ({ open, onCancel, onSubmit }) => {
 
   return (
     <Modal
-      title="Add User"
+      title={t('pages.addUserModal.title')}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -42,69 +44,63 @@ const AddUserModal = ({ open, onCancel, onSubmit }) => {
         className="mt-4"
         initialValues={{ role: 'admin' }}
       >
-        {/* First Name */}
         <Form.Item
           name="firstName"
-          label="First Name"
+          label={t('pages.addUserModal.firstName')}
           rules={[
-            { required: true, message: 'Please enter first name' },
-            { max: 100, message: 'Maximum 100 characters' },
+            { required: true, message: t('pages.addUserModal.pleaseEnterFirstName') },
+            { max: 100, message: t('pages.addUserModal.max100Chars') },
           ]}
         >
-          <Input placeholder="Enter first name" />
+          <Input placeholder={t('pages.addUserModal.enterFirstName')} />
         </Form.Item>
 
-        {/* Last Name */}
         <Form.Item
           name="lastName"
-          label="Last Name"
+          label={t('pages.addUserModal.lastName')}
           rules={[
-            { required: true, message: 'Please enter last name' },
-            { max: 100, message: 'Maximum 100 characters' },
+            { required: true, message: t('pages.addUserModal.pleaseEnterLastName') },
+            { max: 100, message: t('pages.addUserModal.max100Chars') },
           ]}
         >
-          <Input placeholder="Enter last name" />
+          <Input placeholder={t('pages.addUserModal.enterLastName')} />
         </Form.Item>
 
-        {/* Email */}
         <Form.Item
           name="email"
-          label="Email"
+          label={t('pages.addUserModal.email')}
           rules={[
-            { required: true, message: 'Please enter email' },
-            { type: 'email', message: 'Please enter a valid email' },
+            { required: true, message: t('pages.addUserModal.pleaseEnterEmail') },
+            { type: 'email', message: t('pages.addUserModal.pleaseEnterValidEmail') },
           ]}
         >
-          <Input placeholder="Enter email address" type="email" />
+          <Input placeholder={t('pages.addUserModal.enterEmail')} type="email" />
         </Form.Item>
 
-        {/* Password */}
         <Form.Item
           name="password"
-          label="Password"
+          label={t('pages.addUserModal.password')}
           rules={[
-            { required: true, message: 'Please enter password' },
-            { min: 6, message: 'Password must be at least 6 characters' },
+            { required: true, message: t('pages.addUserModal.pleaseEnterPassword') },
+            { min: 6, message: t('pages.addUserModal.passwordMin6') },
           ]}
         >
-          <Input.Password placeholder="Enter password" />
+          <Input.Password placeholder={t('pages.addUserModal.enterPassword')} />
         </Form.Item>
 
-        {/* Phone */}
         <Form.Item
           name="phone"
-          label="Phone"
+          label={t('pages.addUserModal.phone')}
           rules={[
-            { required: true, message: 'Please enter phone number' },
+            { required: true, message: t('pages.addUserModal.pleaseEnterPhone') },
           ]}
         >
-          <Input placeholder="Enter phone number (e.g., +1234567890)" />
+          <Input placeholder={t('pages.addUserModal.enterPhone')} />
         </Form.Item>
 
-        {/* Role */}
         <Form.Item
           name="role"
-          label="Role"
+          label={t('pages.addUserModal.role')}
           initialValue="admin"
         >
           <Input value="admin" disabled />
@@ -113,10 +109,10 @@ const AddUserModal = ({ open, onCancel, onSubmit }) => {
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit" loading={loading}>
-              Add User
+              {t('pages.addUserModal.addUser')}
             </Button>
             <Button onClick={handleCancel} disabled={loading}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </Space>
         </Form.Item>

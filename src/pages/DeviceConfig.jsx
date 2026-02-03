@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Breadcrumb, Card, Form, Input, Button, Space, message, Select, Row, Col, InputNumber, Alert, Table, Tag } from 'antd';
@@ -11,6 +12,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const DeviceConfig = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items: accessControlDevices, devicesLoading } = useSelector((state) => state.accessControl);
@@ -168,10 +170,10 @@ const DeviceConfig = () => {
   const handleRestart = async (values) => {
     try {
       await dispatch(restartDevice(values.localId)).unwrap();
-      message.success('Device restart initiated successfully');
+      message.success(t('pages.deviceConfig.msgRestartSuccess'));
       restartForm.resetFields();
     } catch (error) {
-      message.error(error || 'Failed to restart device');
+      message.error(error || t('pages.deviceConfig.msgRestartFailed'));
     }
   };
 
@@ -186,10 +188,10 @@ const DeviceConfig = () => {
         verifCode: String(values.verifCode || ''),
       };
       await dispatch(upgradeSoftware(payload)).unwrap();
-      message.success('Software upgrade initiated successfully');
+      message.success(t('pages.deviceConfig.msgUpgradeSoftwareSuccess'));
       upgradeSoftwareForm.resetFields();
     } catch (error) {
-      message.error(error || 'Failed to upgrade software');
+      message.error(error || t('pages.deviceConfig.msgUpgradeSoftwareFailed'));
     }
   };
 
@@ -204,10 +206,10 @@ const DeviceConfig = () => {
         verifCode: String(values.verifCode || ''),
       };
       await dispatch(upgradeConfig(payload)).unwrap();
-      message.success('Config upgrade initiated successfully');
+      message.success(t('pages.deviceConfig.msgUpgradeConfigSuccess'));
       upgradeConfigForm.resetFields();
     } catch (error) {
-      message.error(error || 'Failed to upgrade config');
+      message.error(error || t('pages.deviceConfig.msgUpgradeConfigFailed'));
     }
   };
 
@@ -219,20 +221,20 @@ const DeviceConfig = () => {
         port: Number(values.port),
       };
       await dispatch(setServerInfo(payload)).unwrap();
-      message.success('Server info set successfully');
+      message.success(t('pages.deviceConfig.msgServerInfoSuccess'));
       serverInfoForm.resetFields();
     } catch (error) {
-      message.error(error || 'Failed to set server info');
+      message.error(error || t('pages.deviceConfig.msgServerInfoFailed'));
     }
   };
 
   const handleReloadSip = async (values) => {
     try {
       await dispatch(reloadSip({ localId: values.localId })).unwrap();
-      message.success('SIP reloaded successfully');
+      message.success(t('pages.deviceConfig.msgReloadSipSuccess'));
       reloadSipForm.resetFields();
     } catch (error) {
-      message.error(error || 'Failed to reload SIP');
+      message.error(error || t('pages.deviceConfig.msgReloadSipFailed'));
     }
   };
 
@@ -267,49 +269,38 @@ const DeviceConfig = () => {
 
   return (
     <div className="p-4 sm:p-6 pt-16 lg:pt-6 max-w-full overflow-x-hidden">
-      {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Device Manager',
-          },
-          {
-            title: 'Device Config',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.deviceConfig.breadcrumbMgt') },
+          { title: t('pages.deviceConfig.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600, color: '#3C0056' }}>
-          Device Config
+          {t('pages.deviceConfig.title')}
         </Title>
       </div>
 
-      {/* Warning Alert */}
       <Alert
-        message="Device Configuration"
-        description="Please be careful when configuring devices. These operations may affect device functionality."
+        message={t('pages.deviceConfig.alertTitle')}
+        description={t('pages.deviceConfig.alertDesc')}
         type="warning"
         icon={<WarningOutlined />}
         showIcon
         style={{ marginBottom: 24 }}
       />
 
-      {/* Address Selection Card - Always visible */}
       <Card 
         style={{ marginBottom: 24 }}
         styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-        title="Select Address"
+        title={t('pages.deviceConfig.selectAddress')}
       >
-        <Form.Item label="Select Address" style={{ marginBottom: 0 }}>
+        <Form.Item label={t('pages.deviceConfig.selectAddress')} style={{ marginBottom: 0 }}>
           <Select
-            placeholder="Select an address to filter devices (or leave empty to see all)"
+            placeholder={t('pages.deviceConfig.selectAddressPlaceholder')}
             size="large"
             value={selectedAddressId}
             onChange={handleAddressChange}
@@ -341,10 +332,8 @@ const DeviceConfig = () => {
         <Card 
           style={{ marginBottom: 24 }}
           styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-          title={selectedAddressId ? "Select Device" : "All Devices"}
+          title={selectedAddressId ? t('pages.deviceConfig.selectDevice') : t('pages.deviceConfig.allDevices')}
         >
-      
-          
           {filteredDevices.length > 0 ? (
             <Table
               dataSource={filteredDevices}
@@ -356,13 +345,13 @@ const DeviceConfig = () => {
               })}
               columns={[
                 {
-                  title: 'Local ID',
+                  title: t('pages.deviceConfig.colLocalId'),
                   dataIndex: 'localId',
                   key: 'localId',
                   render: (text, record) => text || record.serialNumber || '-',
                 },
                 {
-                  title: 'Installation Position / Label',
+                  title: t('pages.deviceConfig.colPosition'),
                   key: 'position',
                   render: (_, record) => {
                     const position = record.installationPosition || record.deviceType || '-';
@@ -371,7 +360,7 @@ const DeviceConfig = () => {
                   },
                 },
                 {
-                  title: 'Address',
+                  title: t('pages.deviceConfig.colAddress'),
                   key: 'address',
                   render: (_, record) => {
                     const address = record.address || record.addressId;
@@ -389,7 +378,7 @@ const DeviceConfig = () => {
                   },
                 },
                 {
-                  title: 'Status',
+                  title: t('pages.deviceConfig.colStatus'),
                   key: 'status',
                   render: (_, record) => {
                     const isOnline = record.isOnline;
@@ -397,17 +386,17 @@ const DeviceConfig = () => {
                     return (
                       <Space>
                         <Tag color={isOnline ? 'green' : 'red'}>
-                          {isOnline ? 'Online' : 'Offline'}
+                          {isOnline ? t('common.online') : t('common.offline')}
                         </Tag>
                         <Tag color={isEnabled ? 'blue' : 'default'}>
-                          {isEnabled ? 'Enabled' : 'Disabled'}
+                          {isEnabled ? t('pages.accessControl.enable') : t('pages.accessControl.disable')}
                         </Tag>
                       </Space>
                     );
                   },
                 },
                 {
-                  title: 'Action',
+                  title: t('pages.deviceConfig.colAction'),
                   key: 'action',
                   render: (_, record) => (
                     <Button
@@ -419,7 +408,7 @@ const DeviceConfig = () => {
                       }}
                       style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                     >
-                      Configure
+                      {t('pages.deviceConfig.configure')}
                     </Button>
                   ),
                 },
@@ -428,56 +417,52 @@ const DeviceConfig = () => {
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
               {searchTerm 
-                ? `No devices found matching "${searchTerm}"`
-                : 'No devices found'}
+                ? t('pages.deviceConfig.noDevicesMatching', { term: searchTerm })
+                : t('pages.deviceConfig.noDevicesFound')}
             </div>
           )}
         </Card>
       )}
 
-      {/* Show message when no devices found */}
       {!selectedDeviceId && filteredDevices.length === 0 && (
         <Card>
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
             {searchTerm 
-              ? `No devices found matching "${searchTerm}"`
+              ? t('pages.deviceConfig.noDevicesMatching', { term: searchTerm })
               : selectedAddressId 
-                ? 'No devices found for the selected address'
-                : 'No devices found'}
+                ? t('pages.deviceConfig.noDevicesForAddress')
+                : t('pages.deviceConfig.noDevicesFound')}
           </div>
         </Card>
       )}
 
-      {/* Device Config Grid - Show only when a device is selected */}
       {selectedDeviceId && (() => {
         const selectedDevice = filteredDevices.find(d => (d.id || d._id) == selectedDeviceId) || 
                               accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId) ||
                               accessControlDevices.find(d => (d.id || d._id) == selectedDeviceId);
         
         if (!selectedDevice) {
-          return <div>Device not found</div>;
+          return <div>{t('pages.deviceConfig.deviceNotFound')}</div>;
         }
 
         return (
           <div>
-            {/* Back Button */}
             <Button
               icon={<HomeOutlined />}
               onClick={handleBackToTable}
               style={{ marginBottom: 16 }}
             >
-              Back to Device List
+              {t('pages.deviceConfig.backToDeviceList')}
             </Button>
             
-            {/* Device Info Card */}
             <Card 
               style={{ marginBottom: 24 }}
               styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-              title={`Device: ${selectedDevice.localId || selectedDevice.serialNumber || 'Unknown'}`}
+              title={t('pages.deviceConfig.deviceLabel', { name: selectedDevice.localId || selectedDevice.serialNumber || 'Unknown' })}
             >
               <Row gutter={[24, 16]}>
                 <Col xs={24} sm={12} md={8}>
-                  <Form.Item label="Local ID">
+                  <Form.Item label={t('pages.deviceConfig.colLocalId')}>
                     <Input 
                       disabled 
                       size="large" 
@@ -486,7 +471,7 @@ const DeviceConfig = () => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
-                  <Form.Item label="Installation Position">
+                  <Form.Item label={t('pages.deviceConfig.colPosition')}>
                     <Input 
                       disabled 
                       size="large" 
@@ -495,13 +480,13 @@ const DeviceConfig = () => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
-                  <Form.Item label="Status">
+                  <Form.Item label={t('pages.deviceConfig.colStatus')}>
                     <Space>
                       <Tag color={selectedDevice.isOnline ? 'green' : 'red'}>
-                        {selectedDevice.isOnline ? 'Online' : 'Offline'}
+                        {selectedDevice.isOnline ? t('common.online') : t('common.offline')}
                       </Tag>
                       <Tag color={selectedDevice.isEnabled ? 'blue' : 'default'}>
-                        {selectedDevice.isEnabled ? 'Enabled' : 'Disabled'}
+                        {selectedDevice.isEnabled ? t('pages.accessControl.enable') : t('pages.accessControl.disable')}
                       </Tag>
                     </Space>
                   </Form.Item>
@@ -509,15 +494,13 @@ const DeviceConfig = () => {
               </Row>
             </Card>
 
-            {/* Device Config Grid */}
       <Row gutter={[24, 24]}>
-        {/* Restart Device */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <ReloadOutlined style={{ color: '#3C0056' }} />
-                <span>Restart Device</span>
+                <span>{t('pages.deviceConfig.restartDevice')}</span>
               </Space>
             }
             className="h-full shadow-md hover:shadow-lg transition-shadow"
@@ -530,11 +513,11 @@ const DeviceConfig = () => {
             >
               <Form.Item
                 name="localId"
-                label="Device ID"
-                rules={[{ required: true, message: 'Please enter device ID' }]}
+                label={t('pages.deviceConfig.deviceId')}
+                rules={[{ required: true, message: t('pages.deviceConfig.pleaseEnterDeviceId') }]}
               >
                 <Input
-                  placeholder="Enter device ID"
+                  placeholder={t('pages.deviceConfig.enterDeviceId')}
                   size="large"
                   disabled
                 />
@@ -544,26 +527,25 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  devicesLoading={deviceActionLoading}
+                  loading={deviceActionLoading}
                   icon={<ReloadOutlined />}
                   block
                   danger
                   style={{ backgroundColor: '#ff4d4f', borderColor: '#ff4d4f' }}
                 >
-                  Restart Device
+                  {t('pages.deviceConfig.restartDevice')}
                 </Button>
               </Form.Item>
             </Form>
           </Card>
         </Col>
 
-        {/* Reload SIP */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <ApiOutlined style={{ color: '#3C0056' }} />
-                <span>Reload SIP</span>
+                <span>{t('pages.deviceConfig.reloadSip')}</span>
               </Space>
             }
             className="h-full shadow-md hover:shadow-lg transition-shadow"
@@ -576,16 +558,16 @@ const DeviceConfig = () => {
             >
               <Form.Item
                 name="localId"
-                label="Local ID"
-                rules={[{ required: true, message: 'Please select a device' }]}
+                label={t('pages.deviceConfig.colLocalId')}
+                rules={[{ required: true, message: t('pages.deviceConfig.pleaseSelectDevice') }]}
               >
                 <Select
-                  placeholder="Select device"
+                  placeholder={t('pages.deviceConfig.selectDevicePlaceholder')}
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  devicesLoading={devicesLoading}
+                  loading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -600,25 +582,24 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  devicesLoading={deviceActionLoading}
+                  loading={deviceActionLoading}
                   icon={<ApiOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                 >
-                  Reload SIP
+                  {t('pages.deviceConfig.reloadSip')}
                 </Button>
               </Form.Item>
             </Form>
           </Card>
         </Col>
 
-        {/* Set Server Info */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <CloudServerOutlined style={{ color: '#3C0056' }} />
-                <span>Set Server Info</span>
+                <span>{t('pages.deviceConfig.setServerInfo')}</span>
               </Space>
             }
             className="h-full shadow-md hover:shadow-lg transition-shadow"
@@ -631,16 +612,16 @@ const DeviceConfig = () => {
             >
               <Form.Item
                 name="localId"
-                label="Local ID"
-                rules={[{ required: true, message: 'Please select a device' }]}
+                label={t('pages.deviceConfig.colLocalId')}
+                rules={[{ required: true, message: t('pages.deviceConfig.pleaseSelectDevice') }]}
               >
                 <Select
-                  placeholder="Select device"
+                  placeholder={t('pages.deviceConfig.selectDevicePlaceholder')}
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  devicesLoading={devicesLoading}
+                  loading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -653,12 +634,12 @@ const DeviceConfig = () => {
 
               <Form.Item
                 name="ip"
-                label="IP Address"
+                label={t('pages.deviceConfig.ipAddress')}
                 rules={[
-                  { required: true, message: 'Please enter IP address' },
+                  { required: true, message: t('pages.deviceConfig.pleaseEnterIp') },
                   {
                     pattern: /^(\d{1,3}\.){3}\d{1,3}$/,
-                    message: 'Please enter a valid IP address',
+                    message: t('pages.deviceConfig.validIp'),
                   },
                 ]}
               >
@@ -667,10 +648,10 @@ const DeviceConfig = () => {
 
               <Form.Item
                 name="port"
-                label="Port"
+                label={t('pages.deviceConfig.port')}
                 rules={[
-                  { required: true, message: 'Please enter port number' },
-                  { type: 'number', min: 1, max: 65535, message: 'Port must be between 1 and 65535' },
+                  { required: true, message: t('pages.deviceConfig.pleaseEnterPort') },
+                  { type: 'number', min: 1, max: 65535, message: t('pages.deviceConfig.portRange') },
                 ]}
               >
                 <InputNumber
@@ -685,25 +666,24 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  devicesLoading={deviceActionLoading}
+                  loading={deviceActionLoading}
                   icon={<CloudServerOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                 >
-                  Set Server Info
+                  {t('pages.deviceConfig.setServerInfo')}
                 </Button>
               </Form.Item>
             </Form>
           </Card>
         </Col>
 
-        {/* Upgrade Software */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <CloudUploadOutlined style={{ color: '#3C0056' }} />
-                <span>Upgrade Software</span>
+                <span>{t('pages.deviceConfig.upgradeSoftware')}</span>
               </Space>
             }
             className="h-full shadow-md hover:shadow-lg transition-shadow"
@@ -716,16 +696,16 @@ const DeviceConfig = () => {
             >
               <Form.Item
                 name="localId"
-                label="Local ID"
-                rules={[{ required: true, message: 'Please select a device' }]}
+                label={t('pages.deviceConfig.colLocalId')}
+                rules={[{ required: true, message: t('pages.deviceConfig.pleaseSelectDevice') }]}
               >
                 <Select
-                  placeholder="Select device"
+                  placeholder={t('pages.deviceConfig.selectDevicePlaceholder')}
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  devicesLoading={devicesLoading}
+                  loading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -738,10 +718,10 @@ const DeviceConfig = () => {
 
               <Form.Item
                 name="url"
-                label="Download URL"
+                label={t('pages.deviceConfig.downloadUrl')}
                 rules={[
-                  { required: true, message: 'Please enter download URL' },
-                  { type: 'url', message: 'Please enter a valid URL' },
+                  { required: true, message: t('pages.deviceConfig.pleaseEnterUrl') },
+                  { type: 'url', message: t('pages.deviceConfig.validUrl') },
                 ]}
               >
                 <Input placeholder="e.g., http://open.trudian.com/1.zip" />
@@ -751,8 +731,8 @@ const DeviceConfig = () => {
                 <Col span={12}>
                   <Form.Item
                     name="size"
-                    label="File Size (bytes)"
-                    rules={[{ required: true, message: 'Please enter file size' }]}
+                    label={t('pages.deviceConfig.fileSize')}
+                    rules={[{ required: true, message: t('pages.deviceConfig.pleaseEnterFileSize') }]}
                   >
                     <InputNumber
                       placeholder="e.g., 108524"
@@ -764,8 +744,8 @@ const DeviceConfig = () => {
                 <Col span={12}>
                   <Form.Item
                     name="version"
-                    label="Version"
-                    rules={[{ required: true, message: 'Please enter version' }]}
+                    label={t('pages.deviceConfig.version')}
+                    rules={[{ required: true, message: t('pages.deviceConfig.pleaseEnterVersion') }]}
                   >
                     <Input placeholder="e.g., v1.01" />
                   </Form.Item>
@@ -774,14 +754,14 @@ const DeviceConfig = () => {
 
               <Form.Item
                 name="content"
-                label="Content/Description"
+                label={t('pages.deviceConfig.contentDesc')}
               >
                 <TextArea rows={2} placeholder="e.g., fix BUG" />
               </Form.Item>
 
               <Form.Item
                 name="verifCode"
-                label="Verification Code"
+                label={t('pages.deviceConfig.verificationCode')}
               >
                 <Input placeholder="e.g., ABCDEFG" />
               </Form.Item>
@@ -790,25 +770,24 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  devicesLoading={deviceActionLoading}
+                  loading={deviceActionLoading}
                   icon={<CloudUploadOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                 >
-                  Upgrade Software
+                  {t('pages.deviceConfig.upgradeSoftware')}
                 </Button>
               </Form.Item>
             </Form>
           </Card>
         </Col>
 
-        {/* Upgrade Config */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <SettingOutlined style={{ color: '#3C0056' }} />
-                <span>Upgrade Config</span>
+                <span>{t('pages.deviceConfig.upgradeConfig')}</span>
               </Space>
             }
             className="h-full shadow-md hover:shadow-lg transition-shadow"
@@ -821,16 +800,16 @@ const DeviceConfig = () => {
             >
               <Form.Item
                 name="localId"
-                label="Local ID"
-                rules={[{ required: true, message: 'Please select a device' }]}
+                label={t('pages.deviceConfig.colLocalId')}
+                rules={[{ required: true, message: t('pages.deviceConfig.pleaseSelectDevice') }]}
               >
                 <Select
-                  placeholder="Select device"
+                  placeholder={t('pages.deviceConfig.selectDevicePlaceholder')}
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  devicesLoading={devicesLoading}
+                  loading={devicesLoading}
                   disabled
                 >
                   {selectedDevice && (
@@ -843,10 +822,10 @@ const DeviceConfig = () => {
 
               <Form.Item
                 name="url"
-                label="Download URL"
+                label={t('pages.deviceConfig.downloadUrl')}
                 rules={[
-                  { required: true, message: 'Please enter download URL' },
-                  { type: 'url', message: 'Please enter a valid URL' },
+                  { required: true, message: t('pages.deviceConfig.pleaseEnterUrl') },
+                  { type: 'url', message: t('pages.deviceConfig.validUrl') },
                 ]}
               >
                 <Input placeholder="e.g., http://open.trudian.com/1.zip" />
@@ -856,8 +835,8 @@ const DeviceConfig = () => {
                 <Col span={12}>
                   <Form.Item
                     name="size"
-                    label="File Size (bytes)"
-                    rules={[{ required: true, message: 'Please enter file size' }]}
+                    label={t('pages.deviceConfig.fileSize')}
+                    rules={[{ required: true, message: t('pages.deviceConfig.pleaseEnterFileSize') }]}
                   >
                     <InputNumber
                       placeholder="e.g., 108524"
@@ -869,8 +848,8 @@ const DeviceConfig = () => {
                 <Col span={12}>
                   <Form.Item
                     name="version"
-                    label="Version"
-                    rules={[{ required: true, message: 'Please enter version' }]}
+                    label={t('pages.deviceConfig.version')}
+                    rules={[{ required: true, message: t('pages.deviceConfig.pleaseEnterVersion') }]}
                   >
                     <Input placeholder="e.g., v1.01" />
                   </Form.Item>
@@ -879,14 +858,14 @@ const DeviceConfig = () => {
 
               <Form.Item
                 name="content"
-                label="Content/Description"
+                label={t('pages.deviceConfig.contentDesc')}
               >
                 <TextArea rows={2} placeholder="e.g., fix BUG" />
               </Form.Item>
 
               <Form.Item
                 name="verifCode"
-                label="Verification Code"
+                label={t('pages.deviceConfig.verificationCode')}
               >
                 <Input placeholder="e.g., ABCDEFG" />
               </Form.Item>
@@ -895,12 +874,12 @@ const DeviceConfig = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  devicesLoading={deviceActionLoading}
+                  loading={deviceActionLoading}
                   icon={<SettingOutlined />}
                   block
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                 >
-                  Upgrade Config
+                  {t('pages.deviceConfig.upgradeConfig')}
                 </Button>
               </Form.Item>
             </Form>

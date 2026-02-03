@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, Button, Space, Typography, Breadcrumb, Popconfirm, Tooltip, Table, Input, Select, Badge, Alert, App } from 'antd';
 import { HomeOutlined, DeleteOutlined, UserOutlined, SearchOutlined, CheckCircleOutlined, BellOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { fetchUsers, deleteUser, verifyUser, createUser, setSearch, setRole, setPage, setLimit } from '../store/slices/userSlice';
@@ -17,6 +18,7 @@ const { Search } = Input;
 const { Option } = Select;
 
 const UsersList = () => {
+  const { t } = useTranslation();
   const { message } = App.useApp();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -90,7 +92,7 @@ const UsersList = () => {
     try {
       const userId = user._id || user.id;
       await dispatch(deleteUser(userId)).unwrap();
-      message.success('User deleted successfully');
+      message.success(t('pages.users.msgUserDeleted'));
       // Refresh the list
       dispatch(fetchUsers({
         page: pagination.page,
@@ -99,7 +101,7 @@ const UsersList = () => {
         role: filters.role,
       }));
     } catch (error) {
-      message.error(error || 'Failed to delete user');
+      message.error(error || t('pages.users.msgFailedDeleteUser'));
     }
   };
 
@@ -139,12 +141,12 @@ const UsersList = () => {
 
 
       if (!userId) {
-        message.error('User ID is missing');
+        message.error(t('pages.users.msgUserIdMissing'));
         return;
       }
 
       if (!addressId) {
-        message.error('Please select an address');
+        message.error(t('pages.users.msgSelectAddress'));
         return;
       }
 
@@ -270,7 +272,7 @@ const UsersList = () => {
         role: filters.role,
       }));
     } catch (error) {
-      const errorMessage = error?.message || error?.toString() || 'Failed to create user';
+      const errorMessage = error?.message || error?.toString() || t('pages.users.msgFailedCreateUser');
       message.error(errorMessage);
     }
   };
@@ -282,26 +284,26 @@ const UsersList = () => {
 
   const columns = [
     {
-      title: 'ID',
+      title: t('pages.users.colId'),
       dataIndex: 'id',
       key: 'id',
       width: 80,
       render: (text, record) => record.id || record._id || '-',
     },
     {
-      title: 'First Name',
+      title: t('pages.users.colFirstName'),
       dataIndex: 'firstName',
       key: 'firstName',
       render: (text) => text || '-',
     },
     {
-      title: 'Last Name',
+      title: t('pages.users.colLastName'),
       dataIndex: 'lastName',
       key: 'lastName',
       render: (text) => text || '-',
     },
     {
-      title: 'Email',
+      title: t('pages.users.colEmail'),
       dataIndex: 'email',
       key: 'email',
       render: (text) => (
@@ -311,23 +313,23 @@ const UsersList = () => {
       ),
     },
     {
-      title: 'Phone',
+      title: t('pages.users.colPhone'),
       dataIndex: 'phone',
       key: 'phone',
       render: (text) => text || '-',
     },
     {
-      title: 'Role',
+      title: t('pages.users.colRole'),
       dataIndex: 'role',
       key: 'role',
       render: (text) => (
         <span className="px-2 py-1 rounded text-xs font-medium bg-primary-100 text-primary-800">
-          {text || 'User'}
+          {text || t('pages.users.roleUser')}
         </span>
       ),
     },
     {
-      title: 'Verified',
+      title: t('pages.users.colVerified'),
       key: 'isVerified',
       width: 100,
       render: (_, record) => {
@@ -335,28 +337,28 @@ const UsersList = () => {
         return (
           <Space>
             {isVerified ? (
-              <Badge status="success" text="Verified" />
+              <Badge status="success" text={t('pages.users.verified')} />
             ) : (
-              <Badge status="warning" text="Pending" />
+              <Badge status="warning" text={t('pages.users.pending')} />
             )}
           </Space>
         );
       },
     },
     {
-      title: 'Status',
+      title: t('pages.users.colStatus'),
       key: 'status',
       render: (_, record) => {
-        const isActive = record.isActive !== false; // Default to active if not specified
+        const isActive = record.isActive !== false;
         return (
           <span className={isActive ? 'text-green-600' : 'text-red-600'}>
-            {isActive ? 'Active' : 'Inactive'}
+            {isActive ? t('pages.users.active') : t('pages.users.inactive')}
           </span>
         );
       },
     },
     {
-      title: 'Created At',
+      title: t('pages.users.colCreatedAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (text) => {
@@ -374,7 +376,7 @@ const UsersList = () => {
       },
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       width: 180,
       fixed: 'right',
@@ -383,7 +385,7 @@ const UsersList = () => {
         const userId = record.id ?? record._id;
         return (
           <Space size="small">
-            <Tooltip title="View user details (GET users/:id)">
+            <Tooltip title={t('pages.users.viewDetails')}>
               <Button
                 type="text"
                 icon={<EyeOutlined />}
@@ -395,7 +397,7 @@ const UsersList = () => {
               />
             </Tooltip>
             {!isVerified && (
-              <Tooltip title="Accept & Verify User">
+              <Tooltip title={t('pages.users.acceptVerify')}>
                 <Button
                   type="primary"
                   icon={<CheckCircleOutlined />}
@@ -403,19 +405,19 @@ const UsersList = () => {
                   onClick={() => handleVerifyClick(record)}
                   style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                 >
-                  Accept
+                  {t('pages.users.accept')}
                 </Button>
               </Tooltip>
             )}
             <Popconfirm
-              title="Delete this user?"
-              description="Are you sure you want to delete this user? This action cannot be undone."
+              title={t('pages.users.deleteConfirmTitle')}
+              description={t('pages.users.deleteConfirmDesc')}
               onConfirm={() => handleDelete(record)}
-              okText="Yes"
-              cancelText="No"
+              okText={t('common.yes')}
+              cancelText={t('common.no')}
               okButtonProps={{ danger: true }}
             >
-              <Tooltip title="Delete User">
+              <Tooltip title={t('pages.users.deleteUser')}>
                 <Button
                   type="text"
                   danger
@@ -435,32 +437,24 @@ const UsersList = () => {
       {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'User Management',
-          },
-          {
-            title: 'Users List',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.users.breadcrumbMgt') },
+          { title: t('pages.users.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
-      {/* Pending Verifications Alert */}
       {pendingVerifications.length > 0 && (
         <Alert
           message={
             <Space>
               <BellOutlined />
               <span>
-                <strong>{pendingVerifications.length}</strong> user{pendingVerifications.length > 1 ? 's' : ''} waiting for verification
+                {t('pages.users.pendingAlert', { count: pendingVerifications.length })}
               </span>
             </Space>
           }
-          description="New users registered from the mobile app need admin approval to continue using the app."
+          description={t('pages.users.pendingAlertDesc')}
           type="warning"
           showIcon
           closable
@@ -470,24 +464,21 @@ const UsersList = () => {
               size="small"
               type="primary"
               onClick={() => {
-                // Scroll to pending users or filter by unverified
                 const unverifiedUsers = users.filter(u => !u.isVerified);
                 if (unverifiedUsers.length > 0) {
-                  // You could add logic to highlight or scroll to these users
-                  message.info(`There are ${unverifiedUsers.length} unverified users in the table below`);
+                  message.info(t('pages.users.pendingAlert', { count: unverifiedUsers.length }));
                 }
               }}
             >
-              View All
+              {t('pages.users.viewAll')}
             </Button>
           }
         />
       )}
 
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-          User Management
+          {t('pages.users.title')}
         </Title>
         <Space size="middle" direction="vertical" style={{ width: '100%' }} className="sm:!w-auto">
           <Space size="middle" style={{ width: '100%' }} className="sm:!w-auto">
@@ -497,22 +488,22 @@ const UsersList = () => {
               size="large"
               onClick={() => setIsAddUserModalOpen(true)}
             >
-              Add User
+              {t('pages.users.addUser')}
             </Button>
             <Select
-              placeholder="Filter by Role"
+              placeholder={t('pages.users.filterByRole')}
               allowClear
               style={{ width: 180 }}
               size="large"
               value={filters.role || undefined}
               onChange={handleRoleFilter}
             >
-              <Option value="user">User</Option>
-              <Option value="admin">Admin</Option>
-              <Option value="superAdmin">Super Admin</Option>
+              <Option value="user">{t('pages.users.roleUser')}</Option>
+              <Option value="admin">{t('pages.users.roleAdmin')}</Option>
+              <Option value="superAdmin">{t('pages.users.roleSuperAdmin')}</Option>
             </Select>
             <Search
-              placeholder="Search users by name, email, or phone"
+              placeholder={t('pages.users.searchPlaceholder')}
               allowClear
               enterButton={<SearchOutlined />}
               size="large"
@@ -538,7 +529,7 @@ const UsersList = () => {
             total: pagination.total,
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50', '100'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} users`,
+            showTotal: (total, range) => `${range[0]}-${range[1]} ${t('pages.users.ofUsers', { total })}`,
             onChange: (page, pageSize) => {
               dispatch(setPage(page));
               dispatch(setLimit(pageSize));
@@ -546,7 +537,7 @@ const UsersList = () => {
           }}
           scroll={{ x: 'max-content' }}
           locale={{
-            emptyText: 'No users found.',
+            emptyText: t('pages.users.noUsersFound'),
           }}
         />
       </Card>

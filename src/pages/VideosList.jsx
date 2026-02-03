@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm } from 'antd';
@@ -8,6 +9,7 @@ import { mediaService } from '../services/mediaService';
 const { Title } = Typography;
 
 const VideosList = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
@@ -29,7 +31,7 @@ const VideosList = () => {
 
     // Check if user is superadmin
     if (user?.role !== 'superAdmin') {
-      message.error('Access denied. Only super admins can view videos.');
+      message.error(t('pages.videosList.msgAccessDenied'));
       navigate('/access-control/list', { replace: true });
     }
   }, [token, user, navigate]);
@@ -91,9 +93,9 @@ const VideosList = () => {
       } catch (error) {
         console.error('Failed to fetch videos:', error);
         if (error.message && error.message.includes('Unauthorized')) {
-          message.error('Your session has expired. Please login again.');
+          message.error(t('pages.videosList.msgSessionExpired'));
         } else {
-          message.error('Failed to fetch videos');
+          message.error(t('pages.videosList.msgFailedFetch'));
         }
       } finally {
         setLoading(false);
@@ -147,7 +149,7 @@ const VideosList = () => {
     try {
       const videoUrl = getVideoUrlForDelete(record);
       if (!videoUrl) {
-        message.error('Video URL not found');
+        message.error(t('pages.videosList.msgFailedFetch'));
         return;
       }
       
@@ -155,7 +157,7 @@ const VideosList = () => {
       
       const response = await mediaService.deleteVideo(videoUrl);
       
-      message.success('Video deleted successfully');
+      message.success(t('pages.videosList.msgDeleted'));
       
       // Refresh the list
       lastFetchedVideosRef.current = { page: null, limit: null };
@@ -169,7 +171,7 @@ const VideosList = () => {
       setVideos(videosData);
     } catch (error) {
       console.error('Delete video error:', error);
-      message.error(error?.message || 'Failed to delete video');
+      message.error(error?.message || t('pages.videosList.msgFailedDelete'));
     }
   };
 
@@ -187,7 +189,7 @@ const VideosList = () => {
 
   const columns = [
     {
-      title: 'No.',
+      title: t('pages.videosList.colNo'),
       key: 'index',
       width: 80,
       render: (_, __, index) => {
@@ -195,7 +197,7 @@ const VideosList = () => {
       },
     },
     {
-      title: 'Video',
+      title: t('pages.videosList.colVideo'),
       dataIndex: 'videoUrl',
       key: 'video',
       width: 300,
@@ -216,7 +218,7 @@ const VideosList = () => {
       },
     },
     {
-      title: 'File Name',
+      title: t('pages.videosList.colFileName'),
       key: 'fileName',
       render: (_, record) => {
         const videoUrl = getVideoUrl(record);
@@ -228,19 +230,19 @@ const VideosList = () => {
       },
     },
     {
-      title: 'Source',
+      title: t('pages.videosList.colSource'),
       dataIndex: 'source',
       key: 'source',
       render: (text) => text || 'advertisment',
     },
     {
-      title: 'Media Type',
+      title: t('pages.videosList.colMediaType'),
       dataIndex: 'mediaType',
       key: 'mediaType',
       render: (text) => text || 'video',
     },
     {
-      title: 'Created At',
+      title: t('pages.videosList.colCreatedAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (text) => {
@@ -260,17 +262,17 @@ const VideosList = () => {
       },
     },
     {
-      title: 'Actions',
+      title: t('pages.videosList.colActions'),
       key: 'actions',
       width: 120,
       fixed: 'right',
       render: (_, record) => (
         <Popconfirm
-          title="Delete this video?"
-          description="Are you sure you want to delete this video? This action cannot be undone."
+          title={t('pages.videosList.deleteConfirmTitle')}
+          description={t('pages.videosList.deleteConfirmDesc')}
           onConfirm={() => handleDelete(record)}
-          okText="Yes"
-          cancelText="No"
+          okText={t('common.yes')}
+          cancelText={t('common.no')}
           okButtonProps={{ danger: true }}
         >
           <Button
@@ -278,7 +280,7 @@ const VideosList = () => {
             icon={<DeleteOutlined />}
             size="small"
           >
-            Delete
+            {t('pages.videosList.delete')}
           </Button>
         </Popconfirm>
       ),
@@ -289,23 +291,16 @@ const VideosList = () => {
     <div className="p-4 sm:p-6 pt-16 lg:pt-6 max-w-full overflow-x-hidden">
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Media Management',
-          },
-          {
-            title: 'Videos List',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.videosList.breadcrumbMgt') },
+          { title: t('pages.videosList.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0 }}>
-          Videos List
+          {t('pages.videosList.title')}
         </Title>
         <Space>
           <Button
@@ -313,14 +308,14 @@ const VideosList = () => {
             onClick={handleRefresh}
             loading={loading}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button
             type="primary"
             icon={<VideoCameraOutlined />}
             onClick={() => navigate('/media/upload-video')}
           >
-            Upload Video
+            {t('pages.videosList.uploadVideo')}
           </Button>
         </Space>
       </div>
@@ -337,11 +332,12 @@ const VideosList = () => {
             total: pagination.total,
             showSizeChanger: true,
             showTotal: (total, range) =>
-              `Showing ${range[0]} to ${range[1]} of ${total} entries`,
+              t('common.showingEntries', { from: range[0], to: range[1], total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           onChange={handleTableChange}
           scroll={{ x: 'max-content' }}
+          locale={{ emptyText: t('pages.videosList.noVideos') }}
         />
       </div>
     </div>

@@ -1,11 +1,13 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { UserOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { UserOutlined, GlobalOutlined } from '@ant-design/icons';
 import { toggleMenu } from '../../store/slices/navigationSlice';
 import { logout } from '../../store/slices/authSlice';
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,8 +44,27 @@ const Sidebar = ({ isOpen, onClose }) => {
       `}
     >
       <div className="h-full overflow-y-auto p-4">
-        <h2 className="text-xl font-semibold mb-6 text-primary-200 drop-shadow-sm">User Centre</h2>
-        
+        <h2 className="text-xl font-semibold mb-2 text-primary-200 drop-shadow-sm">{t('nav.userCentre')}</h2>
+
+        {/* Language switcher */}
+        <div className="mb-4 flex items-center gap-1 flex-wrap">
+          <GlobalOutlined className="text-primary-200 text-sm" />
+          {['en', 'ru', 'hy'].map((lng) => (
+            <button
+              key={lng}
+              type="button"
+              onClick={() => i18n.changeLanguage(lng)}
+              className={`px-2 py-1 rounded text-xs border transition ${
+                i18n.language === lng || i18n.language?.startsWith(lng)
+                  ? 'bg-primary-500/40 border-primary-300/60 text-white'
+                  : 'border-white/20 text-gray-300 hover:bg-white/10'
+              }`}
+            >
+              {t(`languages.${lng}`)}
+            </button>
+          ))}
+        </div>
+
         <nav className="space-y-1">
           {/* Home */}
           <button
@@ -57,7 +78,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
-            <span>Home</span>
+            <span>{t('nav.home')}</span>
           </button>
 
           {/* Community Mgt */}
@@ -70,7 +91,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               }`}
               onClick={() => handleMenuClick('community')}
             >
-              <span>Community Mgt</span>
+              <span>{t('nav.communityMgt')}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${isExpanded('community') ? 'rotate-90' : ''}`}
                 fill="none"
@@ -90,7 +111,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/community/overview')}
                 >
-                  <span>Overview</span>
+                  <span>{t('nav.overview')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -103,7 +124,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/addresses')}
                 >
-                  <span>Addresses</span>
+                  <span>{t('nav.addresses')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -116,7 +137,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/announcements')}
                 >
-                  <span>Announcements</span>
+                  <span>{t('nav.announcements')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
@@ -135,7 +156,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               }`}
               onClick={() => handleMenuClick('access-control')}
             >
-              <span>Device Control</span>
+              <span>{t('nav.deviceControl')}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${isExpanded('access-control') ? 'rotate-90' : ''}`}
                 fill="none"
@@ -156,7 +177,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/access-control/list')}
                 >
-                  <span>Devices List</span>
+                  <span>{t('nav.devicesList')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -169,7 +190,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/access-control/custom-settings')}
                 >
-                  <span>Device Settings</span>
+                  <span>{t('nav.deviceSettings')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -182,7 +203,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/device-manager/device-config')}
                 >
-                  <span>Device Config</span>
+                  <span>{t('nav.deviceConfig')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -203,7 +224,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <div className="flex items-center space-x-2">
                 <UserOutlined className="w-5 h-5" />
-                <span>User Management</span>
+                <span>{t('nav.userManagement')}</span>
               </div>
               <svg
                 className={`w-4 h-4 transition-transform ${isExpanded('user-management') ? 'rotate-90' : ''}`}
@@ -225,7 +246,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/users')}
                 >
-                  <span>Users List</span>
+                  <span>{t('nav.usersList')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -244,7 +265,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               }`}
               onClick={() => handleMenuClick('records-reports')}
             >
-              <span>Records & Reports</span>
+              <span>{t('nav.recordsReports')}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${isExpanded('records-reports') ? 'rotate-90' : ''}`}
                 fill="none"
@@ -265,7 +286,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/access-control/door-opening-record')}
                 >
-                  <span>Door opening record</span>
+                  <span>{t('nav.doorOpeningRecord')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -278,7 +299,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/access-control/users-face-list')}
                 >
-                  <span>Users Face List</span>
+                  <span>{t('nav.usersFaceList')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -301,7 +322,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-                <span>Card Settings</span>
+                <span>{t('nav.cardSettings')}</span>
               </div>
             </button>
           </div>
@@ -321,7 +342,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                   </svg>
-                  <span>Subscription Plans</span>
+                  <span>{t('nav.subscriptionPlans')}</span>
                 </div>
               </button>
               <button
@@ -336,7 +357,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Assign to User</span>
+                  <span>{t('nav.assignToUser')}</span>
                 </div>
               </button>
               <button
@@ -351,7 +372,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Create Plan</span>
+                  <span>{t('nav.createPlan')}</span>
                 </div>
               </button>
             </div>
@@ -371,7 +392,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  <span>Upload Video</span>
+                  <span>{t('nav.uploadVideo')}</span>
                 </div>
               </button>
             </div>
@@ -392,7 +413,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  <span>Videos List</span>
+                  <span>{t('nav.videosList')}</span>
                 </div>
               </button>
             </div>
@@ -412,7 +433,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>Profile Settings</span>
+                <span>{t('nav.profileSettings')}</span>
               </div>
               <svg
                 className={`w-4 h-4 transition-transform ${isExpanded('userSettings') ? 'rotate-90' : ''}`}
@@ -433,7 +454,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/user-settings/personal-data')}
                 >
-                  <span>Personal Data</span>
+                  <span>{t('nav.personalData')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -446,7 +467,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }`}
                   onClick={() => handleNavigation('/user-settings/change-password')}
                 >
-                  <span>Change Password</span>
+                  <span>{t('nav.changePassword')}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -463,7 +484,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span>Log Out</span>
+            <span>{t('nav.logOut')}</span>
           </button>
         </nav>
       </div>

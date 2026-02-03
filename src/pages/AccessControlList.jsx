@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Table, Button, Space, Typography, Breadcrumb, message, Popconfirm, Tag, Dropdown, Tooltip, Card, Modal } from 'antd';
 import { HomeOutlined, ReloadOutlined, DeleteOutlined, EditOutlined, DownOutlined, UserOutlined, SettingOutlined, MenuOutlined, UnlockOutlined, EyeOutlined, DisconnectOutlined } from '@ant-design/icons';
 import { setPage, setItemsPerPage, deleteItem, setSelectedItems, fetchAddresses } from '../store/slices/accessControlSlice';
@@ -14,6 +15,7 @@ import DeviceDetailsModal from '../components/Devices/DeviceDetailsModal';
 const { Title } = Typography;
 
 const AccessControlList = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, selectedItems, pagination, filters, addressesLoading, addressesError } = useSelector((state) => state.accessControl);
@@ -72,7 +74,7 @@ const AccessControlList = () => {
 
   const handleDelete = (record) => {
     dispatch(deleteItem(record.id));
-    message.success('Access control device deleted successfully');
+    message.success(t('pages.accessControl.msgDeleted'));
   };
 
   const handleEdit = (record) => {
@@ -91,7 +93,7 @@ const AccessControlList = () => {
       setSelectedDeviceId(deviceId);
       setIsDetailsModalOpen(true);
     } else {
-      message.error('Device ID is missing');
+      message.error(t('pages.accessControl.msgDeviceIdMissing'));
     }
   };
 
@@ -100,23 +102,23 @@ const AccessControlList = () => {
     if (deviceId) {
       navigate(`/access-control/custom-settings/${deviceId}`);
     } else {
-      message.error('Device ID is missing');
+      message.error(t('pages.accessControl.msgDeviceIdMissing'));
     }
   };
 
   const handleUnlockDoor = async (record) => {
     const localId = record.localId || record.serialNumber;
     if (!localId) {
-      message.error('Device local ID is missing');
+      message.error(t('pages.accessControl.msgLocalIdMissing'));
       return;
     }
 
     try {
-      message.loading({ content: 'Opening door...', key: 'unlock' });
+      message.loading({ content: t('pages.accessControl.msgOpeningDoor'), key: 'unlock' });
       await dispatch(unlockDevice(localId)).unwrap();
-      message.success({ content: 'Door opened successfully', key: 'unlock' });
+      message.success({ content: t('pages.accessControl.msgDoorOpened'), key: 'unlock' });
     } catch (error) {
-      message.error({ content: error.message || 'Failed to open door', key: 'unlock' });
+      message.error({ content: error.message || t('pages.accessControl.msgFailedOpenDoor'), key: 'unlock' });
     }
   };
 
@@ -128,19 +130,19 @@ const AccessControlList = () => {
     }
 
     Modal.confirm({
-      title: 'Unassign Address?',
-      content: 'Are you sure you want to unassign this address?.',
-      okText: 'Yes',
-      cancelText: 'No',
+      title: t('pages.accessControl.unassignConfirmTitle'),
+      content: t('pages.accessControl.unassignConfirmContent'),
+      okText: t('common.yes'),
+      cancelText: t('common.no'),
       okType: 'danger',
       onOk: async () => {
         try {
-          message.loading({ content: 'Unassigning address...', key: 'unassign' });
+          message.loading({ content: t('pages.accessControl.msgUnassigning'), key: 'unassign' });
           await dispatch(updateAddress({ 
             id: addressId, 
             addressData: { managerId: null } 
           })).unwrap();
-          message.success({ content: 'Address unassigned successfully', key: 'unassign' });
+          message.success({ content: t('pages.accessControl.msgUnassigned'), key: 'unassign' });
           
           // Refresh the list
           dispatch(fetchAddresses({
@@ -148,74 +150,43 @@ const AccessControlList = () => {
             limit: pagination.itemsPerPage,
           }));
         } catch (error) {
-          message.error({ content: error.message || 'Failed to unassign address', key: 'unassign' });
+          message.error({ content: error.message || t('pages.accessControl.msgFailedUnassign'), key: 'unassign' });
         }
       },
     });
   };
 
   const remoteMenuItems = [
-    {
-      key: '1',
-      label: 'Restart',
-    },
-    {
-      key: '2',
-      label: 'Disable',
-    },
-    {
-      key: '3',
-      label: 'Enable',
-    },
-    {
-      key: '4',
-      label: 'Set Sector',
-    },
-    {
-      key: '5',
-      label: 'Set Permissions Value',
-    },
-    {
-      key: '6',
-      label: 'Upgrade Firmware',
-    },
-    {
-      key: '7',
-      label: 'Upgrade Configuration Table',
-    },
-    {
-      key: '8',
-      label: 'Remote Setup',
-    },
-    {
-      key: '9',
-      label: 'Re-issuing Faces',
-    },
-    {
-      key: '10',
-      label: 'Check Face Status',
-    },
+    { key: '1', labelKey: 'restart' },
+    { key: '2', labelKey: 'disable' },
+    { key: '3', labelKey: 'enable' },
+    { key: '4', labelKey: 'setSector' },
+    { key: '5', labelKey: 'setPermissionsValue' },
+    { key: '6', labelKey: 'upgradeFirmware' },
+    { key: '7', labelKey: 'upgradeConfigTable' },
+    { key: '8', labelKey: 'remoteSetup' },
+    { key: '9', labelKey: 'reissuingFaces' },
+    { key: '10', labelKey: 'checkFaceStatus' },
   ];
 
-  const handleRemoteAction = async (action, record) => {
+  const handleRemoteAction = async (labelKey, record) => {
     try {
-      if (action === 'Restart') {
+      if (labelKey === 'restart') {
         const localId = record.localId || record.serialNumber || '001';
-        
-        message.loading({ content: 'Restarting device...', key: 'restart' });
+        message.loading({ content: t('pages.accessControl.msgRestarting'), key: 'restart' });
         const result = await dispatch(restartDevice(localId)).unwrap();
-        message.success({ content: result.message || 'Device restarted successfully', key: 'restart' });
+        message.success({ content: result.message || t('pages.accessControl.msgRestarted'), key: 'restart' });
       } else {
-        message.info(`${action} for device ${record.serialNumber}`);
+        message.info(`${t(`pages.accessControl.${labelKey}`)} for device ${record.serialNumber}`);
       }
     } catch (error) {
-      message.error({ content: error.message || `Failed to ${action.toLowerCase()} device`, key: 'restart' });
+      message.error({ content: error.message || t('pages.accessControl.msgRestarted'), key: 'restart' });
     }
   };
 
   const columns = [
     {
-      title: 'N',
+      title: t('pages.accessControl.colN'),
       dataIndex: 'id',
       key: 'id',
       width: 60,
@@ -224,38 +195,35 @@ const AccessControlList = () => {
       sorter: (a, b) => a.id - b.id,
     },
     {
-      title: 'Community Name',
+      title: t('pages.accessControl.colCommunityName'),
       dataIndex: 'communityName',
       key: 'communityName',
       width: 150,
       ellipsis: { showTitle: true },
     },
     {
-      title: 'Device Type',
+      title: t('pages.accessControl.colDeviceType'),
       key: 'deviceType',
       width: 180,
       ellipsis: { showTitle: true },
-      render: (_, record) => {
-        const deviceType = record.deviceType || '-';
-        return deviceType;
-      },
+      render: (_, record) => record.deviceType || '-',
     },
     {
-      title: 'Access Control Name',
+      title: t('pages.accessControl.colAccessControlName'),
       dataIndex: 'accessControlName',
       key: 'accessControlName',
       width: 150,
       ellipsis: { showTitle: true },
     },
     {
-      title: 'Serial Number',
+      title: t('pages.accessControl.colSerialNumber'),
       dataIndex: 'serialNumber',
       key: 'serialNumber',
       width: 160,
       ellipsis: { showTitle: true },
     },
     {
-      title: 'State',
+      title: t('pages.accessControl.colState'),
       dataIndex: 'state',
       key: 'state',
       width: 100,
@@ -264,13 +232,13 @@ const AccessControlList = () => {
         const isOnline = record.isOnline === true || record.device?.isOnline === true;
         return (
           <Tag color={isOnline ? 'success' : 'error'} style={{ margin: 0 }}>
-            {isOnline ? 'Online' : 'Offline'}
+            {isOnline ? t('common.online') : t('common.offline')}
           </Tag>
         );
       },
     },
     {
-      title: 'Operation',
+      title: t('pages.accessControl.colOperation'),
       key: 'operation',
       width: 100,
       fixed: 'right',
@@ -281,25 +249,25 @@ const AccessControlList = () => {
         const menuItems = [
           {
             key: 'viewDetails',
-            label: 'View Details',
+            label: t('pages.accessControl.viewDetails'),
             icon: <EyeOutlined />,
             onClick: () => handleViewDetails(record),
           },
           {
             key: 'viewUsers',
-            label: 'View Users',
+            label: t('pages.accessControl.viewUsers'),
             icon: <UserOutlined />,
             onClick: () => handleViewUsers(record),
           },
           {
             key: 'doorOpen',
-            label: 'Door Open',
+            label: t('pages.accessControl.doorOpen'),
             icon: <UnlockOutlined />,
             onClick: () => handleUnlockDoor(record),
           },
           {
             key: 'customSettings',
-            label: 'Custom Settings',
+            label: t('pages.accessControl.customSettings'),
             icon: <SettingOutlined />,
             onClick: () => {
               const deviceId = record.id || record._id;
@@ -312,13 +280,13 @@ const AccessControlList = () => {
           },
           {
             key: 'edit',
-            label: 'Assign to Address',
+            label: t('pages.accessControl.assignToAddress'),
             icon: <EditOutlined />,
             onClick: () => handleEdit(record),
           },
           {
             key: 'unassign',
-            label: 'Unassign Address',
+            label: t('pages.accessControl.unassignAddress'),
             icon: <DisconnectOutlined />,
             onClick: () => handleUnassignAddress(record),
           },
@@ -327,12 +295,12 @@ const AccessControlList = () => {
         if (isOnline) {
           menuItems.push({
             key: 'remote',
-            label: 'Remote',
+            label: t('pages.accessControl.remote'),
             icon: <DownOutlined />,
             children: remoteMenuItems.map(item => ({
               key: item.key,
-              label: item.label,
-              onClick: () => handleRemoteAction(item.label, record),
+              label: t(`pages.accessControl.${item.labelKey}`),
+              onClick: () => handleRemoteAction(item.labelKey, record),
             })),
           });
         }
@@ -344,16 +312,16 @@ const AccessControlList = () => {
           key: 'delete',
           label: (
             <span style={{ color: '#ff4d4f' }}>
-              <DeleteOutlined /> Delete
+              <DeleteOutlined /> {t('common.delete')}
             </span>
           ),
           danger: true,
           onClick: () => {
             Modal.confirm({
-              title: 'Delete this access control device?',
-              content: 'Are you sure you want to delete this entry?',
-              okText: 'Yes',
-              cancelText: 'No',
+              title: t('pages.accessControl.deleteConfirmTitle'),
+              content: t('pages.accessControl.deleteConfirmContent'),
+              okText: t('common.yes'),
+              cancelText: t('common.no'),
               okType: 'danger',
               onOk: () => handleDelete(record),
             });
@@ -393,23 +361,16 @@ const AccessControlList = () => {
       {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Access Control Mgt',
-          },
-          {
-            title: 'Access Control List',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.accessControl.breadcrumbMgt') },
+          { title: t('pages.accessControl.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-          Access Control List
+          {t('pages.accessControl.title')}
         </Title>
       </div>
 
@@ -440,8 +401,7 @@ const AccessControlList = () => {
             pageSize: pagination.itemsPerPage,
             total: pagination.totalItems,
             showSizeChanger: true,
-            showTotal: (total, range) =>
-              `Showing ${range[0]} to ${range[1]} of ${total} entries`,
+            showTotal: (total, range) => t('common.showingEntries', { from: range[0], to: range[1], total }),
             pageSizeOptions: ['10', '20', '50', '100'],
             style: { padding: '16px 24px' },
           }}
@@ -490,7 +450,7 @@ const AccessControlList = () => {
                 try {
                   settings = JSON.parse(values.settings);
                 } catch (e) {
-                  message.error('Invalid JSON format for settings');
+                  message.error(t('pages.accessControl.msgInvalidJson'));
                   return;
                 }
               } else if (typeof values.settings === 'object') {
@@ -508,7 +468,7 @@ const AccessControlList = () => {
               settings: settings,
             };
 
-            message.loading({ content: 'Assigning device to address...', key: 'update' });
+            message.loading({ content: t('pages.accessControl.msgAssigningDevice'), key: 'update' });
             
             // Update the device
             await dispatch(updateDevice({ id: editingDevice.id, deviceData })).unwrap();
@@ -520,7 +480,7 @@ const AccessControlList = () => {
               addressData: { managerId: Number(managerId) } 
             })).unwrap();
             
-            message.success({ content: 'Device assigned to address successfully', key: 'update' });
+            message.success({ content: t('pages.accessControl.msgDeviceAssigned'), key: 'update' });
             setIsEditModalOpen(false);
             setEditingDevice(null);
             
@@ -529,7 +489,7 @@ const AccessControlList = () => {
               limit: pagination.itemsPerPage,
             }));
           } catch (error) {
-            message.error({ content: error.message || 'Failed to update access control device', key: 'update' });
+            message.error({ content: error.message || t('pages.accessControl.msgFailedUpdate'), key: 'update' });
           }
         }}
       />

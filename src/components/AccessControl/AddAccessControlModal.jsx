@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Select, Button, Space, Input, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAddresses } from '../../store/slices/accessControlSlice';
@@ -8,6 +9,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode = 'add', deviceData = null }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { addresses, addressesLoading } = useSelector((state) => state.accessControl);
@@ -44,7 +46,7 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
           setLoading(false);
         })
         .catch((error) => {
-          message.error(error.message || 'Failed to load device data');
+          message.error(error.message || t('pages.addAccessControlModal.msgFailedLoadDevice'));
           setLoading(false);
         });
     } else if (open && deviceData) {
@@ -92,7 +94,7 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
             try {
               settings = JSON.parse(trimmed);
             } catch (e) {
-              message.error('Invalid JSON format for settings. Please enter valid JSON.');
+              message.error(t('pages.addAccessControlModal.invalidJson'));
               return;
             }
           }
@@ -111,10 +113,9 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
     } catch (error) {
       console.error('Validation failed:', error);
       if (error.errorFields) {
-        // Form validation errors are handled by Ant Design
         return;
       }
-      message.error('Please check the form and try again');
+      message.error(t('pages.addAccessControlModal.pleaseCheckForm'));
     }
   };
 
@@ -123,9 +124,11 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
     onCancel();
   };
 
+  const modalTitle = mode === 'edit' ? t('pages.addAccessControlModal.titleEdit') : t('pages.addAccessControlModal.titleAdd');
+
   return (
     <Modal
-      title="Assign Device to Address"
+      title={modalTitle}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -139,14 +142,13 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
         onFinish={handleSubmit}
         className="mt-4"
       >
-        {/* Community */}
         <Form.Item
           name="community"
-          label="Community"
-          rules={[{ required: true, message: 'Please select a community' }]}
+          label={t('pages.addAccessControlModal.community')}
+          rules={[{ required: true, message: t('pages.addAccessControlModal.communityPlaceholder') }]}
         >
           <Select
-            placeholder="Please Select A..."
+            placeholder={t('pages.addAccessControlModal.communityPlaceholder')}
             loading={addressesLoading}
             showSearch
             filterOption={(input, option) =>
@@ -161,51 +163,46 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
           </Select>
         </Form.Item>
 
-        {/* Local ID */}
         <Form.Item
           name="localId"
-          label="Local ID"
-          rules={[{ required: true, message: 'Please enter local ID' }]}
+          label={t('pages.addAccessControlModal.localId')}
+          rules={[{ required: true, message: t('pages.addAccessControlModal.localIdPlaceholder') }]}
         >
-          <Input placeholder="Enter local ID (e.g., door001)" disabled />
+          <Input placeholder={t('pages.addAccessControlModal.localIdPlaceholder')} disabled />
         </Form.Item>
 
-        {/* Sector */}
         <Form.Item
           name="sector"
-          label="Sector"
-          rules={[{ required: true, message: 'Please enter sector' }]}
+          label={t('pages.addAccessControlModal.sector')}
+          rules={[{ required: true }]}
         >
-          <Input placeholder="Enter sector (e.g., Sector1)" />
+          <Input placeholder={t('pages.addAccessControlModal.sector')} />
         </Form.Item>
 
-        {/* Sector Password */}
         <Form.Item
           name="sectorPassword"
-          label="Sector Password"
-          rules={[{ required: true, message: 'Please enter sector password' }]}
+          label={t('pages.addAccessControlModal.sectorPassword')}
+          rules={[{ required: true }]}
         >
-          <Input.Password placeholder="Enter sector password" />
+          <Input.Password placeholder={t('pages.addAccessControlModal.sectorPassword')} />
         </Form.Item>
 
-        {/* Device Type */}
         <Form.Item
           name="deviceType"
-          label="Device Type"
-          rules={[{ required: true, message: 'Please select device type' }]}
+          label={t('pages.addAccessControlModal.deviceType')}
+          rules={[{ required: true }]}
         >
-          <Select placeholder="Select device type">
+          <Select placeholder={t('pages.addAccessControlModal.deviceTypePlaceholder')}>
             <Option value="door">Door</Option>
             <Option value="gate">Gate</Option>
             <Option value="building">Building</Option>
           </Select>
         </Form.Item>
 
-        {/* Settings */}
         <Form.Item
           name="settings"
-          label="Settings"
-          help="Enter settings as JSON object"
+          label={t('pages.addAccessControlModal.settings')}
+          help={t('pages.addAccessControlModal.settings')}
           rules={[
             {
               validator: (_, value) => {
@@ -216,7 +213,7 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
                   JSON.parse(value);
                   return Promise.resolve();
                 } catch (e) {
-                  return Promise.reject(new Error('Please enter valid JSON format'));
+                  return Promise.reject(new Error(t('pages.addAccessControlModal.invalidJson')));
                 }
               },
             },
@@ -224,18 +221,17 @@ const AddAccessControlModal = ({ open, onCancel, onSubmit, deviceId = null, mode
         >
           <TextArea
             rows={4}
-            placeholder='{"additionalProp1": "value"}'
+            placeholder={t('pages.addAccessControlModal.settingsPlaceholder')}
           />
         </Form.Item>
 
-        {/* Form Actions */}
         <Form.Item className="mb-0 mt-6">
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
             <Button onClick={handleCancel}>
-              Cancel
+              {t('pages.addAccessControlModal.cancel')}
             </Button>
             <Button type="primary" htmlType="submit" loading={loading}>
-              Submit
+              {t('pages.addAccessControlModal.submit')}
             </Button>
           </Space>
         </Form.Item>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Table, Typography, Breadcrumb, message, Card, Tag } from 'antd';
@@ -11,6 +12,7 @@ import UserDetailsModal from '../components/Users/UserDetailsModal';
 const { Title } = Typography;
 
 const DoorOpeningRecord = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { history, loading, error, pagination } = useSelector((state) => state.userHistory);
@@ -115,9 +117,21 @@ const DoorOpeningRecord = () => {
     }
   };
 
+  const unlockTypeLabelKeys = {
+    IC: 'unlockIC',
+    PASSWORD: 'unlockPassword',
+    AUTH_CODE: 'unlockAuthCode',
+    BLUETOOTH: 'unlockBluetooth',
+    ID: 'unlockID',
+    QR: 'unlockQR',
+    FACE: 'unlockFace',
+    CPU_CARD: 'unlockCPUCard',
+    UNKNOWN: 'unlockUnknown',
+  };
+
   const columns = [
     {
-      title: 'No.',
+      title: t('pages.doorOpeningRecord.colNo'),
       dataIndex: 'id',
       key: 'id',
       width: 80,
@@ -127,7 +141,7 @@ const DoorOpeningRecord = () => {
       },
     },
     {
-      title: 'User Name',
+      title: t('pages.doorOpeningRecord.colUserName'),
       dataIndex: 'userName',
       key: 'userName',
       width: 150,
@@ -157,7 +171,7 @@ const DoorOpeningRecord = () => {
       },
     },
     {
-      title: 'User Email',
+      title: t('pages.doorOpeningRecord.colUserEmail'),
       dataIndex: ['user', 'email'],
       key: 'email',
       width: 200,
@@ -165,7 +179,7 @@ const DoorOpeningRecord = () => {
       render: (text) => text || '-',
     },
     {
-      title: 'Device Name',
+      title: t('pages.doorOpeningRecord.colDeviceName'),
       dataIndex: ['device', 'name'],
       key: 'deviceName',
       width: 150,
@@ -179,7 +193,7 @@ const DoorOpeningRecord = () => {
       },
     },
     {
-      title: 'Device Serial Number',
+      title: t('pages.doorOpeningRecord.colDeviceSerialNumber'),
       dataIndex: ['device', 'serialNumber'],
       key: 'serialNumber',
       width: 150,
@@ -193,7 +207,7 @@ const DoorOpeningRecord = () => {
       },
     },
     {
-      title: 'Address',
+      title: t('pages.doorOpeningRecord.colAddress'),
       dataIndex: ['device', 'addressId'],
       key: 'address',
       width: 200,
@@ -254,7 +268,7 @@ const DoorOpeningRecord = () => {
     //   },
     // },
     {
-      title: 'Unlock Type',
+      title: t('pages.doorOpeningRecord.colUnlockType'),
       dataIndex: 'unlockType',
       key: 'unlockType',
       width: 120,
@@ -263,18 +277,6 @@ const DoorOpeningRecord = () => {
         if (unlockType === undefined || unlockType === null) return '-';
         
         const typeName = getUnlockTypeName(unlockType);
-        const typeLabels = {
-          IC: 'IC Card',
-          PASSWORD: 'Password',
-          AUTH_CODE: 'Auth Code',
-          BLUETOOTH: 'Bluetooth',
-          ID: 'ID',
-          QR: 'QR Code',
-          FACE: 'Face Recognition',
-          CPU_CARD: 'CPU Card',
-          UNKNOWN: 'Unknown',
-        };
-        
         const colors = {
           IC: 'blue',
           PASSWORD: 'orange',
@@ -286,10 +288,10 @@ const DoorOpeningRecord = () => {
           CPU_CARD: 'gold',
           UNKNOWN: 'default',
         };
-        
+        const labelKey = unlockTypeLabelKeys[typeName] || 'unlockUnknown';
         return (
           <Tag color={colors[typeName] || 'default'}>
-            {typeLabels[typeName] || typeName}
+            {t(`pages.doorOpeningRecord.${labelKey}`)}
           </Tag>
         );
       },
@@ -311,24 +313,16 @@ const DoorOpeningRecord = () => {
       {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Access Control Mgt',
-          },
-          {
-            title: 'Door Opening Record',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.doorOpeningRecord.breadcrumbReports') },
+          { title: t('pages.doorOpeningRecord.breadcrumbList') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-          Door Opening Record
+          {t('pages.doorOpeningRecord.title')}
         </Title>
       </div>
 
@@ -346,13 +340,13 @@ const DoorOpeningRecord = () => {
             total: pagination.total,
             showSizeChanger: true,
             showTotal: (total, range) =>
-              `Showing ${range[0]} to ${range[1]} of ${total} entries`,
+              t('common.showingEntries', { from: range[0], to: range[1], total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           onChange={handleTableChange}
           scroll={{ x: 'max-content' }}
           locale={{
-            emptyText: 'No door opening records found.',
+            emptyText: t('pages.doorOpeningRecord.noRecords'),
           }}
         />
       </Card>

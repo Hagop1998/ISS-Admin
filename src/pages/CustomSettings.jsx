@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -42,6 +43,7 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const CustomSettings = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { deviceId } = useParams();
@@ -129,7 +131,7 @@ const CustomSettings = () => {
       
       return deviceData;
     } catch (error) {
-      message.error(error || 'Failed to fetch device details');
+      message.error(error || t('pages.customSettings.msgFailedFetch'));
       return null;
     } finally {
       // Remove from fetching set
@@ -292,25 +294,25 @@ const CustomSettings = () => {
   const handleSave = async (deviceId, type, value) => {
     const device = devices.find(d => (d.id || d._id) === deviceId) || deviceSettings[deviceId];
     if (!device) {
-      message.error('Device not found');
+      message.error(t('pages.customSettings.msgDeviceNotFound'));
       return;
     }
 
     const localId = device.localId || device.serialNumber;
     if (!localId) {
-      message.error('Device local ID is missing');
+      message.error(t('pages.customSettings.msgLocalIdMissing'));
       return;
     }
 
     // Get the actual device ID (numeric ID, not localId)
     const actualDeviceId = device.id || device._id;
     if (!actualDeviceId) {
-      message.error('Device ID is missing');
+      message.error(t('pages.customSettings.msgDeviceIdMissing'));
       return;
     }
 
     try {
-      message.loading({ content: 'Saving configuration...', key: `save-${deviceId}-${type}` });
+      message.loading({ content: t('pages.customSettings.msgSaving'), key: `save-${deviceId}-${type}` });
       
       // Get current settings from deviceSettings state
       const stateSettings = deviceSettings[deviceId]?.settings || {};
@@ -376,9 +378,9 @@ const CustomSettings = () => {
           settings: completeSettings
         }
       }));
-      message.success({ content: 'Configuration saved successfully', key: `save-${deviceId}-${type}` });
+      message.success({ content: t('pages.customSettings.msgSaved'), key: `save-${deviceId}-${type}` });
     } catch (error) {
-      message.error({ content: error || 'Failed to save configuration', key: `save-${deviceId}-${type}` });
+      message.error({ content: error || t('pages.customSettings.msgFailedSave'), key: `save-${deviceId}-${type}` });
     }
   };
 
@@ -459,10 +461,10 @@ const CustomSettings = () => {
                 style={{ width: '100%' }}
               >
                 <Radio.Button value={1} style={{ flex: 1, textAlign: 'center' }}>
-                  Open
+                  {t('pages.customSettings.open')}
                 </Radio.Button>
                 <Radio.Button value={0} style={{ flex: 1, textAlign: 'center' }}>
-                  Close
+                  {t('pages.customSettings.close')}
                 </Radio.Button>
               </Radio.Group>
             </Form.Item>
@@ -512,7 +514,7 @@ const CustomSettings = () => {
                   size="large"
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056', color: 'white' }}
                 >
-                  Save
+                  {t('pages.customSettings.save')}
                 </Button>
               </Space.Compact>
             </Form.Item>
@@ -561,7 +563,7 @@ const CustomSettings = () => {
                   size="large"
                   style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' , color: 'white'}}
                 >
-                  Save
+                  {t('pages.customSettings.save')}
                 </Button>
               </Space.Compact>
             </Form.Item>
@@ -581,10 +583,10 @@ const CustomSettings = () => {
             title: <HomeOutlined />,
           },
           {
-            title: 'Device Control',
+            title: t('pages.customSettings.breadcrumbMgt'),
           },
           {
-            title: 'Custom Settings',
+            title: t('pages.customSettings.breadcrumbList'),
           },
         ]}
         style={{ marginBottom: 24 }}
@@ -593,13 +595,13 @@ const CustomSettings = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0, fontWeight: 600, color: '#3C0056' }}>
-          Custom Settings
+          {t('pages.customSettings.title')}
         </Title>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/access-control/list')}
         >
-          Back to List
+          {t('pages.customSettings.backToList')}
         </Button>
       </div>
 
@@ -607,11 +609,11 @@ const CustomSettings = () => {
       <Card 
         style={{ marginBottom: 24 }}
         styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-        title="Select Address"
+        title={t('pages.customSettings.selectAddress')}
       >
-        <Form.Item label="Select Address" style={{ marginBottom: 0 }}>
+        <Form.Item label={t('pages.customSettings.selectAddress')} style={{ marginBottom: 0 }}>
           <Select
-            placeholder="Select an address to filter devices (or leave empty to see all)"
+            placeholder={t('pages.customSettings.selectAddressPlaceholder')}
             size="large"
             value={selectedAddressId}
             onChange={handleAddressChange}
@@ -643,7 +645,7 @@ const CustomSettings = () => {
         <Card 
           style={{ marginBottom: 24 }}
           styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-          title="All Devices"
+          title={t('pages.customSettings.allDevices')}
         >
           {/* Search Input */}
          
@@ -658,13 +660,13 @@ const CustomSettings = () => {
               })}
               columns={[
                 {
-                  title: 'Local ID',
+                  title: t('pages.customSettings.colLocalId'),
                   dataIndex: 'localId',
                   key: 'localId',
                   render: (text, record) => text || record.serialNumber || '-',
                 },
                 {
-                  title: 'Installation Position / Label',
+                  title: t('pages.customSettings.colPosition'),
                   key: 'position',
                   render: (_, record) => {
                     const position = record.installationPosition || record.deviceType || '-';
@@ -673,7 +675,7 @@ const CustomSettings = () => {
                   },
                 },
                 {
-                  title: 'Address',
+                  title: t('pages.customSettings.colAddress'),
                   key: 'address',
                   render: (_, record) => {
                     const address = record.address || record.addressId;
@@ -694,7 +696,7 @@ const CustomSettings = () => {
                   },
                 },
                 {
-                  title: 'Status',
+                  title: t('pages.customSettings.colStatus'),
                   key: 'status',
                   render: (_, record) => {
                     const isOnline = record.isOnline;
@@ -702,17 +704,17 @@ const CustomSettings = () => {
                     return (
                       <Space>
                         <Tag color={isOnline ? 'green' : 'red'}>
-                          {isOnline ? 'Online' : 'Offline'}
+                          {isOnline ? t('common.online') : t('common.offline')}
                         </Tag>
                         <Tag color={isEnabled ? 'blue' : 'default'}>
-                          {isEnabled ? 'Enabled' : 'Disabled'}
+                          {isEnabled ? t('common.enabled') : t('common.disabled')}
                         </Tag>
                       </Space>
                     );
                   },
                 },
                 {
-                  title: 'Action',
+                  title: t('pages.customSettings.colAction'),
                   key: 'action',
                   render: (_, record) => (
                     <Button
@@ -724,7 +726,7 @@ const CustomSettings = () => {
                       }}
                       style={{ backgroundColor: '#3C0056', borderColor: '#3C0056' }}
                     >
-                      Settings
+                      {t('pages.customSettings.settings')}
                     </Button>
                   ),
                 },
@@ -733,8 +735,8 @@ const CustomSettings = () => {
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
               {searchTerm 
-                ? `No devices found matching "${searchTerm}"`
-                : 'No devices found'}
+                ? t('pages.customSettings.noDevicesMatching', { term: searchTerm })
+                : t('pages.customSettings.noDevicesFound')}
             </div>
           )}
         </Card>
@@ -744,7 +746,7 @@ const CustomSettings = () => {
       {selectedAddressId && !selectedDeviceId && devices.length === 0 && (
         <Card>
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-            No devices found for the selected address
+            {t('pages.customSettings.noDevicesForAddress')}
           </div>
         </Card>
       )}
@@ -758,7 +760,7 @@ const CustomSettings = () => {
           : devices;
         
         if (devicesToShow.length === 0) {
-          return <div>Loading device details...</div>;
+          return <div>{t('pages.customSettings.loadingDeviceDetails')}</div>;
         }
         
         return devicesToShow.map((dev) => {
@@ -779,14 +781,14 @@ const CustomSettings = () => {
                   onClick={handleBackToTable}
                   style={{ marginBottom: 16 }}
                 >
-                  Back to Device List
+                  {t('pages.customSettings.backToDeviceList')}
                 </Button>
               )}
               {/* Device Information Card */}
             <Card 
               style={{ marginBottom: 24 }}
               styles={{ header: { backgroundColor: '#f8f9fa', borderBottom: '2px solid #3C0056' } }}
-              title={`Device: ${deviceName}`}
+              title={t('pages.customSettings.deviceLabel', { name: deviceName })}
             >
               <Row gutter={[24, 16]}>
                 <Col xs={24} sm={12} md={8}>
@@ -799,7 +801,7 @@ const CustomSettings = () => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
-                  <Form.Item label="Access Control Name">
+                  <Form.Item label={t('pages.customSettings.accessControlName')}>
                     <Input 
                       disabled 
                       size="large" 
@@ -808,7 +810,7 @@ const CustomSettings = () => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
-                  <Form.Item label="LocalId">
+                  <Form.Item label={t('pages.customSettings.localId')}>
                     <Input 
                       disabled 
                       size="large" 
@@ -822,56 +824,56 @@ const CustomSettings = () => {
             {/* Switch Settings Section */}
             <div style={{ marginBottom: 24 }}>
               <Title level={4} style={{ marginBottom: 16, color: '#3C0056' }}>
-                Switch Settings
+                {t('pages.customSettings.switchSettings')}
               </Title>
               <Row gutter={[16, 16]}>
                 {renderSwitchCard(
                   devId,
-                  'Liveness Detection',
+                  t('pages.customSettings.livenessDetection'),
                   <PoweroffOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Living Switch',
+                  t('pages.customSettings.livingSwitch'),
                   SetDoorTypeEnum.LIVENESS_SWITCH
                 )}
                 {renderSwitchCard(
                   devId,
-                  'Cloud Intercom',
+                  t('pages.customSettings.cloudIntercom'),
                   <CloudOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Cloud Intercom Switch',
+                  t('pages.customSettings.cloudIntercomSwitch'),
                   SetDoorTypeEnum.CLOUD_INTERCOM_SWITCH
                 )}
                 {renderSwitchCard(
                   devId,
-                  'QR Code',
+                  t('pages.customSettings.qrCode'),
                   <QrcodeOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Qr Code Lock Switch',
+                  t('pages.customSettings.qrCodeLockSwitch'),
                   SetDoorTypeEnum.QR_CODE_SWITCH
                 )}
                 {renderSwitchCard(
                   devId,
-                  'Face Recognition',
+                  t('pages.customSettings.faceRecognition'),
                   <EyeOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Automatic Face Recognition Switch',
+                  t('pages.customSettings.automaticFaceSwitch'),
                   SetDoorTypeEnum.AUTOMATIC_FACE_SWITCH
                 )}
                 {renderSwitchCard(
                   devId,
-                  'Card Verification',
+                  t('pages.customSettings.cardVerification'),
                   <CreditCardOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Credit Card Check Switch Failure',
+                  t('pages.customSettings.cardSwipeFailureVerification'),
                   SetDoorTypeEnum.CARD_SWIPE_FAILURE_VERIFICATION
                 )}
                 {renderSwitchCard(
                   devId,
-                  'Direct Call',
+                  t('pages.customSettings.directCall'),
                   <PhoneOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Call Phone Switch Directly',
+                  t('pages.customSettings.callPhoneSwitchDirectly'),
                   SetDoorTypeEnum.DIRECT_CALL_MOBILE
                 )}
                 {renderSwitchCard(
                   devId,
-                  'Unlock Record',
+                  t('pages.customSettings.unlockRecord'),
                   <CameraOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Whether to upload a picture of the unlocking record',
+                  t('pages.customSettings.uploadUnlockRecordImage'),
                   SetDoorTypeEnum.UPLOAD_UNLOCK_RECORD_IMAGE
                 )}
               </Row>
@@ -880,22 +882,22 @@ const CustomSettings = () => {
             {/* Threshold Settings Section */}
             <div style={{ marginBottom: 24 }}>
               <Title level={4} style={{ marginBottom: 16, color: '#3C0056' }}>
-                Threshold Settings
+                {t('pages.customSettings.thresholdSettings')}
               </Title>
               <Row gutter={[16, 16]}>
                 {renderThresholdCard(
                   devId,
-                  'Liveness Threshold',
+                  t('pages.customSettings.livenessThreshold'),
                   <SlidersOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Living Threshold',
+                  t('pages.customSettings.livingThreshold'),
                   SetDoorTypeEnum.LIVENESS_THRESHOLD,
                   90
                 )}
                 {renderThresholdCard(
                   devId,
-                  'Recognition Threshold',
+                  t('pages.customSettings.recognitionThreshold'),
                   <SlidersOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Recognition Threshold',
+                  t('pages.customSettings.recognitionThreshold'),
                   SetDoorTypeEnum.FACE_RECOGNITION_THRESHOLD,
                   90
                 )}
@@ -905,22 +907,22 @@ const CustomSettings = () => {
             {/* Time Settings Section */}
             <div>
               <Title level={4} style={{ marginBottom: 16, color: '#3C0056' }}>
-                Time Settings
+                {t('pages.customSettings.timeSettings')}
               </Title>
               <Row gutter={[16, 16]}>
                 {renderTimeCard(
                   devId,
-                  'Advertising Sleep Start',
+                  t('pages.customSettings.advertisingSleepStart'),
                   <ClockCircleOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Advertising Dormancy Start Time',
+                  t('pages.customSettings.advertisingDormancyStartTime'),
                   SetDoorTypeEnum.ADVERTISING_SLEEP_START,
                   0
                 )}
                 {renderTimeCard(
                   devId,
-                  'Advertising Sleep End',
+                  t('pages.customSettings.advertisingSleepEnd'),
                   <ClockCircleOutlined style={{ color: '#3C0056', fontSize: 18 }} />,
-                  'Advertising Sleep Over Time',
+                  t('pages.customSettings.advertisingSleepOverTime'),
                   SetDoorTypeEnum.ADVERTISING_SLEEP_END,
                   600
                 )}

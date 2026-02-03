@@ -1,10 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Typography } from 'antd';
 import { SafetyOutlined, TeamOutlined, SettingOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
 const Home = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 pt-16 lg:pt-6">
       <div className="max-w-4xl w-full text-center">
@@ -22,11 +24,10 @@ const Home = () => {
         {/* Welcome Text */}
         <div className="bg-white rounded-lg shadow-lg p-8 sm:p-12 mb-8">
           <Title level={1} className="text-primary-600 mb-4">
-            Welcome to ISS Admin Portal
+            {t('pages.home.welcomeTitle')}
           </Title>
           <Paragraph className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
-            Your comprehensive management platform for access control, community management, and device configuration.
-            Manage your entire security infrastructure from one centralized dashboard.
+            {t('pages.home.welcomeSubtitle')}
           </Paragraph>
 
           {/* Features Grid */}
@@ -34,30 +35,30 @@ const Home = () => {
             <div className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg border border-primary-200">
               <SafetyOutlined className="text-4xl text-primary-600 mb-4" />
               <Title level={4} className="text-primary-700 mb-2">
-                Access Control
+                {t('pages.home.accessControl')}
               </Title>
               <Paragraph className="text-gray-600 text-sm">
-                Manage user access, devices, and security settings with ease
+                {t('pages.home.accessControlDesc')}
               </Paragraph>
             </div>
 
             <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
               <TeamOutlined className="text-4xl text-blue-600 mb-4" />
               <Title level={4} className="text-blue-700 mb-2">
-                Community Management
+                {t('pages.home.communityManagement')}
               </Title>
               <Paragraph className="text-gray-600 text-sm">
-                Oversee addresses, managers, and community resources efficiently
+                {t('pages.home.communityManagementDesc')}
               </Paragraph>
             </div>
 
             <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
               <SettingOutlined className="text-4xl text-purple-600 mb-4" />
               <Title level={4} className="text-purple-700 mb-2">
-                Device Configuration
+                {t('pages.home.deviceConfiguration')}
               </Title>
               <Paragraph className="text-gray-600 text-sm">
-                Configure and manage your security devices and card settings
+                {t('pages.home.deviceConfigurationDesc')}
               </Paragraph>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Select, Button, Space, Spin, Radio, Typography, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAddresses } from '../../store/slices/addressSlice';
@@ -8,6 +9,7 @@ const { Option } = Select;
 const { Text } = Typography;
 
 const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { items: addresses, loading } = useSelector((state) => state.addresses);
@@ -85,15 +87,14 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
     try {
       // Validate chip selection
       if (assignChip === null) {
-        message.error('Please select a chip assignment option');
+        message.error(t('pages.selectAddressModal.pleaseSelectChipOption'));
         return;
       }
 
-      // If "Yes" is selected, validate chip selection
       if (assignChip === 'yes') {
         const chipId = form.getFieldValue('chipId');
         if (!chipId) {
-          message.error('Please select a chip to assign');
+          message.error(t('pages.selectAddressModal.pleaseSelectChipToAssign'));
           return;
         }
       }
@@ -119,7 +120,7 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
       setAssignChip(null);
     } catch (error) {
       console.error('Verification submission error:', error);
-      message.error('Failed to verify user: ' + (error?.message || 'Unknown error'));
+      message.error(t('pages.selectAddressModal.msgFailedVerify') + (error?.message || 'Unknown error'));
     } finally {
       setLoadingSubscription(false);
     }
@@ -138,15 +139,12 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
   // Allow confirm if "No" is selected, or if "Yes" is selected and a chip is chosen
   const isConfirmDisabled = currentStep === 3 && assignChip === null;
 
+  const userName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || '';
+  const modalTitle = currentStep === 1 ? t('pages.selectAddressModal.titleSelectAddress') : currentStep === 2 ? t('pages.selectAddressModal.titleSubscription') : t('pages.selectAddressModal.titleAssignChip');
+
   return (
     <Modal
-      title={
-        currentStep === 1 
-          ? "Select Address for User" 
-          : currentStep === 2
-          ? "Subscription Complete"
-          : "Assign Chip"
-      }
+      title={modalTitle}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -161,18 +159,18 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
         {currentStep === 1 && (
           <>
         <Form.Item
-          label={`Select address for ${user?.firstName || ''} ${user?.lastName || ''}`}
+          label={t('pages.selectAddressModal.selectAddressFor', { name: userName })}
           name="addressId"
-          rules={[{ required: true, message: 'Please select an address' }]}
+          rules={[{ required: true, message: t('pages.selectAddressModal.pleaseSelectAddress') }]}
         >
           <Select
-            placeholder="Select an address"
+            placeholder={t('pages.selectAddressModal.selectAddressPlaceholder')}
             loading={loading}
             showSearch
             filterOption={(input, option) =>
               String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
             }
-            notFoundContent={loading ? <Spin size="small" /> : 'No addresses found'}
+            notFoundContent={loading ? <Spin size="small" /> : t('pages.selectAddressModal.noAddressesFound')}
           >
             {addresses.map((address) => (
               <Option key={address.id || address._id} value={address.id || address._id}>
@@ -186,10 +184,10 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
         <Form.Item>
           <Space>
                 <Button type="primary" onClick={handleAddressNext}>
-                  Next
+                  {t('pages.selectAddressModal.next')}
                 </Button>
                 <Button onClick={handleCancel}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Space>
             </Form.Item>
@@ -199,9 +197,9 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
         {currentStep === 2 && (
           <>
             <Form.Item
-              label="Subscription Complete?"
+              label={t('pages.selectAddressModal.subscriptionCompleteQuestion')}
               name="subscriptionComplete"
-              rules={[{ required: true, message: 'Please select an option' }]}
+              rules={[{ required: true, message: t('pages.selectAddressModal.pleaseSelectOption') }]}
             >
               <Radio.Group 
                 onChange={handleSubscriptionChange} 
@@ -210,15 +208,15 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
               >
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Radio value="yes">
-                    <Text strong>Yes</Text>
+                    <Text strong>{t('pages.userDetailsModal.yes')}</Text>
                     <Text type="secondary" style={{ marginLeft: 8 }}>
-                      Complete subscription for this user
+                      {t('pages.selectAddressModal.yesCompleteSubscription')}
                     </Text>
                   </Radio>
                   <Radio value="no">
-                    <Text strong>No</Text>
+                    <Text strong>{t('pages.userDetailsModal.no')}</Text>
                     <Text type="secondary" style={{ marginLeft: 8 }}>
-                      Verify user without subscription
+                      {t('pages.selectAddressModal.noVerifyWithoutSubscription')}
                     </Text>
                   </Radio>
                 </Space>
@@ -232,13 +230,13 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
                   onClick={handleSubscriptionNext} 
                   disabled={isNextDisabled}
                 >
-                  Next
+                  {t('pages.selectAddressModal.next')}
                 </Button>
                 <Button onClick={handleBack}>
-                  Back
+                  {t('pages.selectAddressModal.back')}
                 </Button>
                 <Button onClick={handleCancel}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Space>
             </Form.Item>
@@ -248,9 +246,9 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
         {currentStep === 3 && (
           <>
             <Form.Item
-              label="Assign Chip?"
+              label={t('pages.selectAddressModal.assignChipQuestion')}
               name="assignChip"
-              rules={[{ required: true, message: 'Please select an option' }]}
+              rules={[{ required: true, message: t('pages.selectAddressModal.pleaseSelectOption') }]}
             >
               <Radio.Group 
                 onChange={handleChipChange} 
@@ -259,15 +257,15 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
               >
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Radio value="yes">
-                    <Text strong>Yes</Text>
+                    <Text strong>{t('pages.userDetailsModal.yes')}</Text>
                     <Text type="secondary" style={{ marginLeft: 8 }}>
-                      Assign a chip to this user
+                      {t('pages.selectAddressModal.yesAssignChip')}
                     </Text>
                   </Radio>
                   <Radio value="no">
-                    <Text strong>No</Text>
+                    <Text strong>{t('pages.userDetailsModal.no')}</Text>
                     <Text type="secondary" style={{ marginLeft: 8 }}>
-                      Skip chip assignment
+                      {t('pages.selectAddressModal.noSkipChip')}
                     </Text>
                   </Radio>
                 </Space>
@@ -277,17 +275,17 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
             {assignChip === 'yes' && (
               <Form.Item
                 name="chipId"
-                label="Select Chip"
-                rules={[{ required: true, message: 'Please select a chip' }]}
+                label={t('pages.selectAddressModal.selectChip')}
+                rules={[{ required: true, message: t('pages.selectAddressModal.pleaseSelectChip') }]}
               >
                 <Select
-                  placeholder="Select an unassigned chip"
+                  placeholder={t('pages.selectAddressModal.selectChipPlaceholder')}
                   loading={chipsLoading}
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  notFoundContent={chipsLoading ? <Spin size="small" /> : 'No unassigned chips found'}
+                  notFoundContent={chipsLoading ? <Spin size="small" /> : t('pages.selectAddressModal.noUnassignedChipsFound')}
                 >
                   {chips?.filter(chip => 
                     (chip.chipStatus?.toLowerCase() === 'unassigned' || chip.chipStatus === 'unAssigned')
@@ -309,13 +307,13 @@ const SelectAddressModal = ({ open, onCancel, onSubmit, user }) => {
                   loading={loadingSubscription}
                   disabled={isConfirmDisabled}
                 >
-                  Confirm & Verify User
+                  {t('pages.selectAddressModal.confirmVerifyUser')}
                 </Button>
                 <Button onClick={handleBack} disabled={loadingSubscription}>
-                  Back
+                  {t('pages.selectAddressModal.back')}
                 </Button>
                 <Button onClick={handleCancel} disabled={loadingSubscription}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Space>
             </Form.Item>

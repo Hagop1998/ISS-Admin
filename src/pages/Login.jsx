@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Form, Input, Button, Typography, Space, Card, message } from 'antd';
 import { LockOutlined, MailOutlined, LoginOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +9,7 @@ import { login, resetError, resetMessage } from '../store/slices/authSlice';
 const { Title, Text } = Typography;
 
 const Login = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,7 +29,7 @@ const Login = () => {
     if (status === 'succeeded' && token) {
       const redirectPath = location.state?.from?.pathname || '/access-control/list';
       navigate(redirectPath, { replace: true });
-      messageApi.success(authMessage || 'Logged in successfully');
+      messageApi.success(authMessage || t('pages.login.loggedInSuccess'));
       dispatch(resetMessage());
     }
   }, [status, token, navigate, location.state, messageApi, authMessage, dispatch]);
@@ -42,8 +44,8 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-xl">
         <Space direction="vertical" size="large" className="w-full">
           <div className="text-center">
-            <Title level={2} style={{ marginBottom: 8 }}>Welcome Back</Title>
-            <Text type="secondary">Sign in to continue to ISS Admin Dashboard</Text>
+            <Title level={2} style={{ marginBottom: 8 }}>{t('pages.login.welcomeBack')}</Title>
+            <Text type="secondary">{t('pages.login.signInSubtitle')}</Text>
           </div>
 
           <Form
@@ -54,26 +56,26 @@ const Login = () => {
             initialValues={{ remember: true }}
           >
             <Form.Item
-              label="Email"
+              label={t('pages.login.email')}
               name="email"
-              rules={[{ required: true, message: 'Please enter your email' }, { type: 'email', message: 'Please enter a valid email' }]}
+              rules={[{ required: true, message: t('pages.login.emailRequired') }, { type: 'email', message: t('pages.login.emailInvalid') }]}
             >
               <Input
                 size="large"
                 prefix={<MailOutlined className="text-primary-600" />}
-                placeholder="john@example.com"
+                placeholder={t('pages.login.emailPlaceholder')}
               />
             </Form.Item>
 
             <Form.Item
-              label="Password"
+              label={t('pages.login.password')}
               name="password"
-              rules={[{ required: true, message: 'Please enter your password' }]}
+              rules={[{ required: true, message: t('pages.login.passwordRequired') }]}
             >
               <Input.Password
                 size="large"
                 prefix={<LockOutlined className="text-primary-600" />}
-                placeholder="StrongPassword123"
+                placeholder={t('pages.login.passwordPlaceholder')}
               />
             </Form.Item>
 
@@ -85,7 +87,7 @@ const Login = () => {
               icon={<LoginOutlined />}
               loading={status === 'loading'}
             >
-              Log In
+              {t('pages.login.signIn')}
             </Button>
           </Form>
         </Space>

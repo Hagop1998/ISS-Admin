@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Form, Upload, Button, Card, Typography, Breadcrumb, message, Space, Select, Progress } from 'antd';
@@ -9,6 +10,7 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const VideoUpload = () => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ const VideoUpload = () => {
 
     // Check if user` superadmin
     if (user?.role !== 'superAdmin') {
-      message.error('Access denied. Only admins can upload videos.');
+      message.error(t('pages.videoUpload.msgAccessDenied'));
       navigate('/access-control/list', { replace: true });
     }
   }, [token, user, navigate]);
@@ -47,26 +49,24 @@ const VideoUpload = () => {
     const fileExtension = getFileExtension(file.name);
     
     if (!allowedExtensions.includes(fileExtension)) {
-      const errorMsg = `Invalid file type! Only ${allowedExtensions.map(ext => ext.toUpperCase()).join(', ')} files are allowed. Your file: ${fileExtension || 'unknown'}`;
+      const errorMsg = t('pages.videoUpload.msgInvalidType', { extensions: allowedExtensions.map(ext => ext.toUpperCase()).join(', '), ext: fileExtension || 'unknown' });
       message.error(errorMsg);
       setFileError(errorMsg);
       return Upload.LIST_IGNORE;
     }
 
-    // Also check MIME type as secondary validation
     const isVideo = file.type.startsWith('video/');
     if (!isVideo) {
-      const errorMsg = `Invalid file type! Only video files (${allowedExtensions.map(ext => ext.toUpperCase()).join(', ')}) are allowed.`;
+      const errorMsg = t('pages.videoUpload.msgInvalidTypeVideo', { extensions: allowedExtensions.map(ext => ext.toUpperCase()).join(', ') });
       message.error(errorMsg);
       setFileError(errorMsg);
       return Upload.LIST_IGNORE;
     }
 
-    // Check file size (500MB max)
     const fileSizeMB = file.size / 1024 / 1024;
     const isLt500M = fileSizeMB < 500;
     if (!isLt500M) {
-      const errorMsg = `File size exceeds limit! Maximum size: 500MB. Your file: ${fileSizeMB.toFixed(2)}MB`;
+      const errorMsg = t('pages.videoUpload.msgSizeExceeded', { size: fileSizeMB.toFixed(2) });
       message.error(errorMsg);
       setFileError(errorMsg);
       return Upload.LIST_IGNORE;
@@ -102,8 +102,9 @@ const VideoUpload = () => {
   const handleSubmit = async (values) => {
     // Validate file is selected
     if (fileList.length === 0) {
-      setFileError('Please select a video file to upload');
-      message.error('Please select a video file to upload');
+      const msg = t('pages.videoUpload.msgSelectFile');
+      setFileError(msg);
+      message.error(msg);
       return;
     }
 
@@ -112,35 +113,32 @@ const VideoUpload = () => {
     const file = fileItem?.originFileObj || fileItem;
     
     if (!file || !(file instanceof File)) {
-      const errorMsg = 'Please select a valid video file';
+      const errorMsg = t('pages.videoUpload.msgSelectFile');
       setFileError(errorMsg);
       message.error(errorMsg);
       return;
     }
 
-    // Validate file extension (server allows: mp4, mov, avi, mkv)
     const allowedExtensions = getAllowedExtensions();
     const fileExtension = getFileExtension(file.name);
     
     if (!allowedExtensions.includes(fileExtension)) {
-      const errorMsg = `Invalid file type! Only ${allowedExtensions.map(ext => ext.toUpperCase()).join(', ')} files are allowed. Your file: ${fileExtension || 'unknown'}`;
+      const errorMsg = t('pages.videoUpload.msgInvalidType', { extensions: allowedExtensions.map(ext => ext.toUpperCase()).join(', '), ext: fileExtension || 'unknown' });
       setFileError(errorMsg);
       message.error(errorMsg);
       return;
     }
 
-    // Also check MIME type as secondary validation
     if (!file.type.startsWith('video/')) {
-      const errorMsg = `Invalid file type! Only video files (${allowedExtensions.map(ext => ext.toUpperCase()).join(', ')}) are allowed.`;
+      const errorMsg = t('pages.videoUpload.msgInvalidTypeVideo', { extensions: allowedExtensions.map(ext => ext.toUpperCase()).join(', ') });
       setFileError(errorMsg);
       message.error(errorMsg);
       return;
     }
 
-    // Validate file size (500MB max)
     const fileSizeMB = file.size / 1024 / 1024;
     if (fileSizeMB >= 500) {
-      const errorMsg = `File size exceeds limit! Maximum size: 500MB. Your file: ${fileSizeMB.toFixed(2)}MB`;
+      const errorMsg = t('pages.videoUpload.msgSizeExceeded', { size: fileSizeMB.toFixed(2) });
       setFileError(errorMsg);
       message.error(errorMsg);
       return;
@@ -163,10 +161,7 @@ const VideoUpload = () => {
       });
 
       // Show success message with video URL if available
-      const successMessage = response?.videoUrl 
-        ? `Video uploaded successfully! URL: ${response.videoUrl}`
-        : 'Video uploaded successfully!';
-      message.success(successMessage);
+      message.success(t('pages.videoUpload.msgSuccess'));
       
       // Clear form and file list after successful upload
       form.resetFields();
@@ -177,7 +172,7 @@ const VideoUpload = () => {
       console.error('Video upload error:', error);
       
       // Extract error message properly
-      let errorMsg = 'Failed to upload video';
+      let errorMsg = t('pages.videoUpload.msgFailed');
       if (error?.message) {
         errorMsg = error.message;
       } else if (typeof error === 'string') {
@@ -201,23 +196,16 @@ const VideoUpload = () => {
     <div className="p-4 sm:p-6 pt-16 lg:pt-6 max-w-full overflow-x-hidden">
       <Breadcrumb
         items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            title: 'Media Management',
-          },
-          {
-            title: 'Upload Video',
-          },
+          { href: '/', title: <HomeOutlined /> },
+          { title: t('pages.videoUpload.breadcrumbMgt') },
+          { title: t('pages.videoUpload.breadcrumbCreate') },
         ]}
         style={{ marginBottom: 24 }}
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <Title level={2} style={{ margin: 0 }}>
-          Upload Video
+          {t('pages.videoUpload.title')}
         </Title>
       </div>
 
@@ -230,10 +218,10 @@ const VideoUpload = () => {
           size="large"
         >
           <Form.Item
-            label="Video File"
+            label={t('pages.videoUpload.selectVideo')}
             required
             validateStatus={fileError ? 'error' : ''}
-            help={fileError || (fileList.length === 0 ? 'Please select a video file' : '')}
+            help={fileError || (fileList.length === 0 ? t('pages.videoUpload.msgSelectFile') : '')}
           >
             <Upload
               fileList={fileList}
@@ -242,10 +230,10 @@ const VideoUpload = () => {
               onRemove={handleRemove}
               maxCount={1}
               accept=".mp4,.mov,.avi,.mkv,video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
-              customRequest={() => {}} // Prevent auto-upload, we handle it manually
+              customRequest={() => {}}
             >
               <Button icon={<UploadOutlined />} disabled={uploading}>
-                Select Video
+                {t('pages.videoUpload.selectVideo')}
               </Button>
             </Upload>
             <div style={{ 
@@ -253,7 +241,7 @@ const VideoUpload = () => {
               fontSize: '12px', 
               color: fileError ? '#ff4d4f' : '#999' 
             }}>
-              Supported formats: MP4, MOV, AVI, MKV. Maximum size: 500MB
+              {t('pages.videoUpload.selectVideo')}
             </div>
             {uploadProgress > 0 && uploadProgress < 100 && (
               <Progress percent={uploadProgress} style={{ marginTop: 8 }} />
@@ -283,7 +271,7 @@ const VideoUpload = () => {
                 size="large"
                 disabled={fileList.length === 0}
               >
-                {uploading ? 'Uploading...' : 'Upload Video'}
+                {uploading ? t('common.loading') : t('pages.videoUpload.upload')}
               </Button>
               <Button
                 onClick={() => {
@@ -295,14 +283,14 @@ const VideoUpload = () => {
                 size="large"
                 disabled={uploading}
               >
-                Reset
+                {t('common.reset')}
               </Button>
               <Button
                 onClick={() => navigate(-1)}
                 size="large"
                 disabled={uploading}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </Space>
           </Form.Item>
